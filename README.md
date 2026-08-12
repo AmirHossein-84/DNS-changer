@@ -31,26 +31,26 @@
 │   Active Profile:  ✨ Shecan (178)                                          │
 │     Previous DNS:  1.1.1.1, 1.0.0.1 (Press [U] to revert)                   │
 └─────────────────────────────────────────────────────────────────────────────┘
-┌─────┬────────────────┬────────────────┬───────────────────┬─────┬────────────────┬────────────────┬───────────────────┐
-│   # │ Provider Name  │ Primary IP     │ Badge             │   # │ Provider Name  │ Primary IP     │ Badge             │
-├─────┼────────────────┼────────────────┼───────────────────┼─────┼────────────────┼────────────────┼───────────────────┤
-│  1. │ ⭐ Shecan (178)│ 178.22.122.100 │ ⚡ Anti-Sanction  │ 14. │ Alternate DNS  │ 76.76.19.19    │ 🛡️ Ad-Block Global│
-│  2. │ ⭐ Shecan (185)│ 185.51.200.2   │ ⚡ Anti-Sanction  │ 15. │ Verisign       │ 64.6.64.6      │ 🌐 Stable Anycast │
-│  3. │ ⭐ Electro     │ 78.157.42.100  │ 🎮 Gaming / Bypass│ 16. │ Neustar Ultra  │ 156.154.70.1   │ 🏢 Neustar Cloud  │
-│  4. │ 403 Online     │ 10.202.10.202  │ 💻 Dev / Docker   │ 17. │ Comodo Secure  │ 8.26.56.26     │ 🛡️ Threat Shield │
-│  5. │ Radar Game     │ 10.202.10.10   │ 🎮 Gaming Low-Ping│ 18. │ Yandex DNS     │ 77.88.8.8      │ 🌐 Yandex Fast    │
-│  6. │ Bogzar DNS     │ 185.55.226.26  │ ⚡ Fast Bypass    │ 19. │ Dyn DNS        │ 216.146.35.35  │ 🏢 Oracle Dyn     │
-│  7. │ Gozar DNS      │ 185.55.225.25  │ ⚡ Bypass         │ 20. │ Quad9 Malware  │ 9.9.9.9        │ 🛡️ Malware Block  │
-│  8. │ Host Iran      │ 172.29.2.100   │ 🏢 Local Infra    │ 21. │ AdGuard (Def)  │ 94.140.14.14   │ 🛡️ AdGuard Default│
-│  9. │ Shatel DNS     │ 85.15.1.15     │ 🌐 Shatel ISP     │ 22. │ AdGuard (Leg)  │ 176.103.130.130│ 🛡️ AdGuard Legacy │
-│ 10. │ Pishgaman      │ 5.202.100.100  │ 🌐 Pishgaman ISP  │ 23. │ CleanBrowsing  │ 185.228.168.9  │ 🛡️ Clean Browsing │
-│ 11. │ ⭐ Cloudflare  │ 1.1.1.1        │ 🌐 Ultra Fast     │ 24. │ SafeDNS        │ 195.46.39.39   │ 🛡️ Cloud Security │
-│ 12. │ Google Public  │ 8.8.8.8        │ 🌐 Global Reliable│ 25. │ DNS.Watch      │ 84.200.69.80   │ 🔒 No-Logs Privacy│
-│ 13. │ OpenDNS        │ 208.67.222.222 │ 🏢 Cisco Enterprise│26. │ OpenNIC        │ 46.151.208.154 │ 🌐 Open NIC       │
-└─────┴────────────────┴────────────────┴───────────────────┴─────┴────────────────┴────────────────┴───────────────────┘
-  0. Reset to DHCP  •  [U] Undo  •  [P] Fav Pin  •  [L] Leak Test    [B] Benchmark  •  [M] Custom  •  [S] Adapter  •  [F] Flush  •  [Q] Exit
+┌─────┬──────────────────────────┬─────────────────┬─────┬──────────────────────────┬─────────────────┐
+│   # │ Provider Name            │ Primary IP      │   # │ Provider Name            │ Primary IP      │
+├─────┼──────────────────────────┼─────────────────┼─────┼──────────────────────────┼─────────────────┤
+│  1. │ ⭐ Shecan (178)          │ 178.22.122.100  │ 14. │ Alternate DNS            │ 76.76.19.19     │
+│  2. │ ⭐ Shecan (185)          │ 185.51.200.2    │ 15. │ Verisign                 │ 64.6.64.6       │
+│  3. │ ⭐ Electro               │ 78.157.42.100   │ 16. │ Neustar UltraDNS         │ 156.154.70.1    │
+│  4. │ 403 Online               │ 10.202.10.202   │ 17. │ Comodo Secure            │ 8.26.56.26      │
+│  5. │ Radar Game               │ 10.202.10.10    │ 18. │ Yandex DNS               │ 77.88.8.8       │
+│  6. │ Bogzar DNS               │ 185.55.226.26   │ 19. │ Dyn DNS                  │ 216.146.35.35   │
+│  7. │ Gozar DNS                │ 185.55.225.25   │ 20. │ Quad9 (Malware Block)    │ 9.9.9.9         │
+│  8. │ Host Iran                │ 172.29.2.100    │ 21. │ AdGuard DNS (Default)    │ 94.140.14.14    │
+│  9. │ Shatel DNS               │ 85.15.1.15      │ 22. │ AdGuard DNS (Legacy)     │ 176.103.130.130 │
+│ 10. │ Pishgaman DNS            │ 5.202.100.100   │ 23. │ CleanBrowsing (Security) │ 185.228.168.9   │
+│ 11. │ ⭐ Cloudflare (1.1.1.1)  │ 1.1.1.1         │ 24. │ SafeDNS                  │ 195.46.39.39    │
+│ 12. │ Google Public DNS        │ 8.8.8.8         │ 25. │ DNS.Watch                │ 84.200.69.80    │
+│ 13. │ OpenDNS (Cisco)          │ 208.67.222.222  │ 26. │ OpenNIC                  │ 46.151.208.154  │
+└─────┴──────────────────────────┴─────────────────┴─────┴──────────────────────────┴─────────────────┘
+0. Reset DHCP • [U] Undo • [P] Fav Pin • [C] Current DNS • [L] Leak Test • [B] Benchmark • [M] Custom • [S] Adapter • [F] Flush • [Q] Exit
 
-👉 Enter DNS number [0-26] or Hotkey (U/P/L/B/M/S/F/Q): 
+👉 Enter DNS number [0-26] or Hotkey (U/P/C/L/B/M/S/F/Q): 
 ```
 
 ---
