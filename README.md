@@ -121,7 +121,26 @@ You can directly download and run the latest pre-compiled standalone `.exe`:
 
 ---
 
-### 🐍 Option B: Run from Source (Python)
+### 🛠️ Option B: Building Standalone Windows (.exe)
+You can compile your own standalone `.exe` with the custom application icon using either method:
+
+#### Method 1: One-Click Build Script *(Recommended)*
+Simply double-click `build.bat` or run:
+```cmd
+build.bat
+```
+
+#### Method 2: Manual PyInstaller Command
+```powershell
+pip install pyinstaller
+pyinstaller --console --uac-admin --onefile --name "DNS-Changer" --icon="assets/DNS-Changer.ico" --clean main.py
+```
+
+The compiled standalone executable with the custom icon will be generated in `dist/DNS-Changer.exe`.
+
+---
+
+### 🐍 Option C: Run from Source (Python)
 
 #### 1. Prerequisites
 - **Operating System**: Windows 10 / 11 / Windows Server
@@ -198,26 +217,6 @@ Press **`B`** from the main menu to run a live speed benchmark across all 26+ DN
 * **✔ OK** (45 – 100 ms)
 * **⚠ SLOW** (> 100 ms)
 * **✖ FAIL** (Timeout / No Response)
-
----
-
-## 🛠️ Building Standalone Windows (.exe)
-
-You can compile DNS Changer into a single standalone `.exe` file with the custom application icon:
-
-### Method 1: One-Click Build Script *(Recommended)*
-Simply double-click `build.bat` or run:
-```cmd
-build.bat
-```
-
-### Method 2: Manual PyInstaller Command
-```powershell
-pip install pyinstaller
-pyinstaller --console --uac-admin --onefile --name "DNS-Changer" --icon="assets/DNS-Changer.ico" --clean main.py
-```
-
-The compiled standalone executable with the custom icon will be generated in `dist/DNS-Changer.exe`.
 
 ---
 
