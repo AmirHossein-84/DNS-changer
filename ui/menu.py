@@ -21,12 +21,12 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str, cur
     Prompts for fast single-step input:
     - Number (1..N): Sets DNS and returns 'exit_success' to auto-close.
     - Number 0: Resets DNS to DHCP and returns 'exit_success' to auto-close.
-    - Hotkeys (U, P, B, M, S, F, Q): Launches respective tools or exits.
+    - Hotkeys (U, P, L, B, M, S, F, Q): Launches respective tools or exits.
     """
     total = len(providers)
     try:
         raw = console.input(
-            f"\n[bold cyan]👉 Enter DNS number [bold yellow][0-{total}][/bold yellow] or Hotkey [bold yellow](U/P/B/M/S/F/Q)[/bold yellow]: [/bold cyan]"
+            f"\n[bold cyan]👉 Enter DNS number [bold yellow][0-{total}][/bold yellow] or Hotkey [bold yellow](U/P/L/B/M/S/F/Q)[/bold yellow]: [/bold cyan]"
         ).strip()
     except (KeyboardInterrupt, EOFError):
         return "exit"
@@ -52,7 +52,13 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str, cur
             target = providers[val - 1]
             # Save current for undo
             storage.save_previous_dns(active_adapter, current_dns)
-            ok, msg = network.set_dns(active_adapter, target["dns1"], target.get("dns2"))
+            ok, msg = network.set_dns(
+                active_adapter,
+                target["dns1"],
+                target.get("dns2"),
+                ipv6_1=target.get("ipv6_1"),
+                ipv6_2=target.get("ipv6_2"),
+            )
             if ok:
                 display.print_success(
                     f"Applied [bold white]{target['name']}[/bold white] ({target['dns1']}"
@@ -104,6 +110,10 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str, cur
         handle_pin_favorites(providers)
         return "continue"
 
+    elif cmd == "l":
+        handle_leak_test(active_adapter, current_dns)
+        return "continue"
+
     elif cmd == "b":
         handle_benchmark(active_adapter, current_dns)
         return "continue"
@@ -129,9 +139,29 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str, cur
         return "exit"
 
     else:
-        display.print_warning(f"Unknown command '{raw}'. Enter a DNS number or U/P/B/M/S/F/Q.")
+        display.print_warning(f"Unknown command '{raw}'. Enter a DNS number or U/P/L/B/M/S/F/Q.")
         time.sleep(1.0)
         return "continue"
+
+
+def handle_leak_test(adapter_name: str, current_dns: Dict[str, any]):
+    """Runs DNS leak and tampering detection test."""
+    import questionary
+    from rich.progress import Progress, SpinnerColumn, TextColumn
+    from core import leak_test
+
+    display.print_info(f"Auditing DNS privacy and integrity on '{adapter_name}'...")
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=display.console,
+    ) as progress:
+        task = progress.add_task("[cyan]Running DNS Leak & NXDOMAIN Hijack Audit...", total=None)
+        report = leak_test.run_dns_leak_audit(adapter_name, current_dns.get("servers", []))
+
+    display.print_leak_test_report(report)
+    questionary.press_any_key_to_continue("Press any key to return to main menu...").ask()
 
 
 def handle_pin_favorites(providers: List[Dict[str, str]]):
@@ -227,7 +257,13 @@ def handle_benchmark(adapter_name: str, current_dns: Optional[Dict[str, any]] = 
     if current_dns:
         storage.save_previous_dns(adapter_name, current_dns)
 
-    ok, msg = network.set_dns(adapter_name, target["dns1"], target.get("dns2"))
+    ok, msg = network.set_dns(
+        adapter_name,
+        target["dns1"],
+        target.get("dns2"),
+        ipv6_1=target.get("ipv6_1"),
+        ipv6_2=target.get("ipv6_2"),
+    )
     if ok:
         display.print_success(f"Applied {target['name']} on {adapter_name} & flushed cache!")
     else:

@@ -19,9 +19,33 @@ DEFAULT_CATEGORIES = {
         {"name": "Pishgaman DNS", "dns1": "5.202.100.100", "dns2": "5.202.100.101", "desc": "Pishgaman ISP DNS", "badge": "🌐 Pishgaman ISP"},
     ],
     "Global & Fast": [
-        {"name": "Cloudflare (1.1.1.1)", "dns1": "1.1.1.1", "dns2": "1.0.0.1", "desc": "Fastest privacy-first global DNS", "badge": "🌐 Ultra Fast"},
-        {"name": "Google Public DNS", "dns1": "8.8.8.8", "dns2": "8.8.4.4", "desc": "Reliable & widely used global DNS", "badge": "🌐 Global High-Reliability"},
-        {"name": "OpenDNS (Cisco)", "dns1": "208.67.222.222", "dns2": "208.67.220.220", "desc": "Enterprise-grade reliability by Cisco", "badge": "🏢 Cisco Enterprise"},
+        {
+            "name": "Cloudflare (1.1.1.1)",
+            "dns1": "1.1.1.1",
+            "dns2": "1.0.0.1",
+            "ipv6_1": "2606:4700:4700::1111",
+            "ipv6_2": "2606:4700:4700::1001",
+            "desc": "Fastest privacy-first global DNS",
+            "badge": "🌐 Ultra Fast",
+        },
+        {
+            "name": "Google Public DNS",
+            "dns1": "8.8.8.8",
+            "dns2": "8.8.4.4",
+            "ipv6_1": "2001:4860:4860::8888",
+            "ipv6_2": "2001:4860:4860::8844",
+            "desc": "Reliable & widely used global DNS",
+            "badge": "🌐 Global High-Reliability",
+        },
+        {
+            "name": "OpenDNS (Cisco)",
+            "dns1": "208.67.222.222",
+            "dns2": "208.67.220.220",
+            "ipv6_1": "2620:119:35::35",
+            "ipv6_2": "2620:119:53::53",
+            "desc": "Enterprise-grade reliability by Cisco",
+            "badge": "🏢 Cisco Enterprise",
+        },
         {"name": "Alternate DNS", "dns1": "76.76.19.19", "dns2": "76.223.122.150", "desc": "Ad-blocking alternative DNS", "badge": "🛡️ Ad-Block Global"},
         {"name": "Verisign", "dns1": "64.6.64.6", "dns2": "64.6.65.6", "desc": "High stability global DNS", "badge": "🌐 Stable Anycast"},
         {"name": "Neustar UltraDNS", "dns1": "156.154.70.1", "dns2": "156.154.71.1", "desc": "Fast recursive enterprise DNS", "badge": "🏢 Neustar Cloud"},
@@ -30,20 +54,76 @@ DEFAULT_CATEGORIES = {
         {"name": "Dyn DNS", "dns1": "216.146.35.35", "dns2": "216.146.36.36", "desc": "Oracle Dyn public DNS", "badge": "🏢 Oracle Dyn"},
     ],
     "Privacy & Security": [
-        {"name": "Quad9 (Malware Block)", "dns1": "9.9.9.9", "dns2": "149.112.112.112", "desc": "Blocks malicious domains & preserves privacy", "badge": "🛡️ Malware Block"},
-        {"name": "AdGuard DNS (Default)", "dns1": "94.140.14.14", "dns2": "94.140.15.15", "desc": "Blocks ads, tracking & phishing", "badge": "🛡️ AdGuard Default"},
+        {
+            "name": "Quad9 (Malware Block)",
+            "dns1": "9.9.9.9",
+            "dns2": "149.112.112.112",
+            "ipv6_1": "2620:fe::fe",
+            "ipv6_2": "2620:fe::9",
+            "desc": "Blocks malicious domains & preserves privacy",
+            "badge": "🛡️ Malware Block",
+        },
+        {
+            "name": "AdGuard DNS (Default)",
+            "dns1": "94.140.14.14",
+            "dns2": "94.140.15.15",
+            "ipv6_1": "2a10:50c0::ad1:ff",
+            "ipv6_2": "2a10:50c0::ad2:ff",
+            "desc": "Blocks ads, tracking & phishing",
+            "badge": "🛡️ AdGuard Default",
+        },
         {"name": "AdGuard DNS (Legacy)", "dns1": "176.103.130.130", "dns2": "176.103.130.131", "desc": "AdGuard legacy server addresses", "badge": "🛡️ AdGuard Legacy"},
-        {"name": "CleanBrowsing (Security)", "dns1": "185.228.168.9", "dns2": "185.228.169.9", "desc": "Blocks malware, phishing & malicious domains", "badge": "🛡️ Clean Browsing"},
+        {
+            "name": "CleanBrowsing (Security)",
+            "dns1": "185.228.168.9",
+            "dns2": "185.228.169.9",
+            "ipv6_1": "2a0d:2a00:1::2",
+            "ipv6_2": "2a0d:2a00:2::2",
+            "desc": "Blocks malware, phishing & malicious domains",
+            "badge": "🛡️ Clean Browsing",
+        },
         {"name": "SafeDNS", "dns1": "195.46.39.39", "dns2": "195.46.39.40", "desc": "Cloud protection against cyber threats", "badge": "🛡️ Cloud Security"},
-        {"name": "DNS.Watch", "dns1": "84.200.69.80", "dns2": "84.200.70.40", "desc": "Uncensored, no-logging DNS in Germany", "badge": "🔒 No-Logs Privacy"},
+        {
+            "name": "DNS.Watch",
+            "dns1": "84.200.69.80",
+            "dns2": "84.200.70.40",
+            "ipv6_1": "2001:1608:10:25::1c04:b12f",
+            "ipv6_2": "2001:1608:10:25::9249:d69b",
+            "desc": "Uncensored, no-logging DNS in Germany",
+            "badge": "🔒 No-Logs Privacy",
+        },
         {"name": "OpenNIC", "dns1": "46.151.208.154", "dns2": "128.199.248.105", "desc": "Decentralized, anti-censorship open DNS", "badge": "🌐 Open NIC"},
     ],
     "Gaming & Low Ping": [
         {"name": "Radar Game", "dns1": "10.202.10.10", "dns2": "10.202.10.11", "desc": "Optimized routing for gaming servers", "badge": "🎮 Radar Gaming"},
         {"name": "Electro Gaming", "dns1": "78.157.42.100", "dns2": "78.157.42.101", "desc": "Gaming anti-sanction provider", "badge": "🎮 Electro Gaming"},
-        {"name": "Cloudflare Gaming", "dns1": "1.1.1.1", "dns2": "1.0.0.1", "desc": "Ultra low latency anycast network", "badge": "🎮 Cloudflare Gaming"},
-        {"name": "Google DNS", "dns1": "8.8.8.8", "dns2": "8.8.4.4", "desc": "Global low ping edge routing", "badge": "🎮 Google Gaming"},
-        {"name": "Quad9 Gaming", "dns1": "9.9.9.9", "dns2": "149.112.112.112", "desc": "Fast anycast secure gaming", "badge": "🎮 Quad9 Gaming"},
+        {
+            "name": "Cloudflare Gaming",
+            "dns1": "1.1.1.1",
+            "dns2": "1.0.0.1",
+            "ipv6_1": "2606:4700:4700::1111",
+            "ipv6_2": "2606:4700:4700::1001",
+            "desc": "Ultra low latency anycast network",
+            "badge": "🎮 Cloudflare Gaming",
+        },
+        {
+            "name": "Google DNS",
+            "dns1": "8.8.8.8",
+            "dns2": "8.8.4.4",
+            "ipv6_1": "2001:4860:4860::8888",
+            "ipv6_2": "2001:4860:4860::8844",
+            "desc": "Global low ping edge routing",
+            "badge": "🎮 Google Gaming",
+        },
+        {
+            "name": "Quad9 Gaming",
+            "dns1": "9.9.9.9",
+            "dns2": "149.112.112.112",
+            "ipv6_1": "2620:fe::fe",
+            "ipv6_2": "2620:fe::9",
+            "desc": "Fast anycast secure gaming",
+            "badge": "🎮 Quad9 Gaming",
+        },
     ],
 }
 
@@ -79,7 +159,14 @@ def save_custom_dns(custom_list: List[Dict[str, str]]) -> bool:
     return _write_config_raw(cfg)
 
 
-def add_custom_dns(name: str, dns1: str, dns2: Optional[str] = None, desc: str = "Custom DNS") -> bool:
+def add_custom_dns(
+    name: str,
+    dns1: str,
+    dns2: Optional[str] = None,
+    desc: str = "Custom DNS",
+    ipv6_1: Optional[str] = None,
+    ipv6_2: Optional[str] = None,
+) -> bool:
     """Adds or updates a custom DNS configuration."""
     customs = load_custom_dns()
     customs = [c for c in customs if c["name"].lower() != name.lower()]
@@ -87,6 +174,8 @@ def add_custom_dns(name: str, dns1: str, dns2: Optional[str] = None, desc: str =
         "name": name,
         "dns1": dns1,
         "dns2": dns2 or "",
+        "ipv6_1": ipv6_1 or "",
+        "ipv6_2": ipv6_2 or "",
         "desc": desc,
         "badge": "⭐ Custom Profile",
     })
@@ -126,6 +215,7 @@ def save_previous_dns(adapter_name: str, dns_info: Dict[str, Any]) -> bool:
     history[adapter_name] = {
         "servers": dns_info.get("servers", []),
         "is_dhcp": dns_info.get("is_dhcp", True),
+        "ipv6_servers": dns_info.get("ipv6_servers", []),
     }
     cfg["history"] = history
     return _write_config_raw(cfg)

@@ -227,11 +227,99 @@ def get_current_dns(adapter_name: str) -> Dict[str, any]:
     return dns_info
 
 
+def has_ipv6_enabled(adapter_name: str) -> bool:
+    """Checks if IPv6 protocol is active on the given interface."""
+    try:
+        res = subprocess.run(
+            ["netsh", "interface", "ipv6", "show", "interface", f"name={adapter_name}"],
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+        return res.returncode == 0 and "connected" in res.stdout.lower()
+    except Exception:
+        return False
+
+
+def set_dns_v6(adapter_name: str, ipv6_1: str, ipv6_2: Optional[str] = None) -> Tuple[bool, str]:
+    """Configures static IPv6 DNS servers for an adapter."""
+    try:
+        cmd_p = [
+            "netsh",
+            "interface",
+            "ipv6",
+            "set",
+            "dnsservers",
+            f"name={adapter_name}",
+            "source=static",
+            f"address={ipv6_1}",
+            "register=primary",
+            "validate=no",
+        ]
+        res1 = subprocess.run(
+            cmd_p,
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+        if res1.returncode != 0:
+            return False, res1.stderr or res1.stdout
+
+        if ipv6_2 and ipv6_2.strip():
+            cmd_s = [
+                "netsh",
+                "interface",
+                "ipv6",
+                "add",
+                "dnsservers",
+                f"name={adapter_name}",
+                f"address={ipv6_2}",
+                "index=2",
+                "validate=no",
+            ]
+            subprocess.run(
+                cmd_s,
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            )
+        return True, "IPv6 DNS configured successfully."
+    except Exception as e:
+        return False, str(e)
+
+
+def clear_dns_v6(adapter_name: str) -> Tuple[bool, str]:
+    """Resets IPv6 DNS on the adapter back to automatic (DHCP)."""
+    try:
+        cmd = [
+            "netsh",
+            "interface",
+            "ipv6",
+            "set",
+            "dnsservers",
+            f"name={adapter_name}",
+            "source=dhcp",
+        ]
+        subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+        return True, "IPv6 DNS reset to DHCP."
+    except Exception as e:
+        return False, str(e)
+
+
 def set_dns(
-    adapter_name: str, dns1: str, dns2: Optional[str] = None
+    adapter_name: str,
+    dns1: str,
+    dns2: Optional[str] = None,
+    ipv6_1: Optional[str] = None,
+    ipv6_2: Optional[str] = None,
 ) -> Tuple[bool, str]:
     """
-    Configures static primary and optional secondary DNS servers for an adapter,
+    Configures static IPv4 and optional dual-stack IPv6 DNS servers for an adapter,
     then automatically flushes the DNS cache.
     """
     try:
@@ -277,6 +365,10 @@ def set_dns(
             if res2.returncode != 0:
                 return False, f"Primary DNS set, but failed to set secondary DNS: {res2.stderr or res2.stdout}"
 
+        # Dual-stack IPv6 configuration if available
+        if ipv6_1 and has_ipv6_enabled(adapter_name):
+            set_dns_v6(adapter_name, ipv6_1, ipv6_2)
+
         flush_dns_cache()
         return True, f"Successfully set DNS to {dns1}" + (f", {dns2}" if dns2 else "")
     except Exception as e:
@@ -285,7 +377,7 @@ def set_dns(
 
 def clear_dns(adapter_name: str) -> Tuple[bool, str]:
     """
-    Resets DNS configuration on the adapter back to automatic (DHCP),
+    Resets both IPv4 and IPv6 DNS configurations on the adapter back to automatic (DHCP),
     then flushes the DNS cache.
     """
     try:
@@ -307,6 +399,7 @@ def clear_dns(adapter_name: str) -> Tuple[bool, str]:
         if res.returncode != 0:
             return False, f"Failed to reset DNS: {res.stderr or res.stdout}"
 
+        clear_dns_v6(adapter_name)
         flush_dns_cache()
         return True, f"Successfully reset DNS for '{adapter_name}' to Automatic (DHCP)."
     except Exception as e:

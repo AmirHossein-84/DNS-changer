@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from rich.align import Align
 from rich.box import ROUNDED, SIMPLE_HEAVY
 from rich.console import Console
@@ -208,7 +208,7 @@ def print_quick_dns_grid(providers: List[Dict[str, str]], favorites: Optional[Li
     hotkey_table.add_column(justify="right")
 
     hotkey_table.add_row(
-        "[bold green]0. Reset to DHCP[/bold green]  •  [bold yellow][U] Undo Revert[/bold yellow]  •  [bold yellow][P] Pin Favorite[/bold yellow]",
+        "[bold green]0. Reset to DHCP[/bold green]  •  [bold yellow][U] Undo[/bold yellow]  •  [bold yellow][P] Fav Pin[/bold yellow]  •  [bold magenta][L] Leak Test[/bold magenta]",
         "[bold cyan][B][/bold cyan] Benchmark  •  [bold cyan][M][/bold cyan] Custom  •  [bold cyan][S][/bold cyan] Adapter  •  [bold cyan][F][/bold cyan] Flush  •  [bold red][Q][/bold red] Exit",
     )
 
@@ -272,6 +272,66 @@ def print_benchmark_table(results: List[Dict[str, any]]):
 
     console.print()
     console.print(table)
+    console.print()
+
+
+def print_leak_test_report(report: Dict[str, Any]):
+    """
+    Displays the DNS leak, hijack, and tampering audit security report.
+    """
+    score = report.get("security_score", "SECURE")
+    if score == "SECURE":
+        badge = "[bold green]🛡️ SECURE (Clean & Untampered)[/bold green]"
+        border_color = "green"
+    elif score == "WARNING":
+        badge = "[bold yellow]⚠️ WARNING (NXDOMAIN Hijacking Detected)[/bold yellow]"
+        border_color = "yellow"
+    else:
+        badge = "[bold red]🔴 COMPROMISED (DNS Interception / Tampering Detected)[/bold red]"
+        border_color = "red"
+
+    table = Table.grid(padding=(0, 2))
+    table.add_column(style="bold white", justify="right")
+    table.add_column()
+
+    table.add_row("Target Adapter:", f"[bold cyan]{report['adapter']}[/bold cyan]")
+    servers_str = ", ".join(report.get("configured_dns", [])) or "None / DHCP"
+    table.add_row("Configured DNS:", f"[bold green]{servers_str}[/bold green]")
+    table.add_row("Security Posture:", badge)
+
+    resp_str = "[bold green]✔ Yes[/bold green]" if report["resolver_responsive"] else "[bold red]✖ No Response[/bold red]"
+    table.add_row("Resolver Responsive:", resp_str)
+
+    nx_str = (
+        f"[bold red]✖ Hijacked! (Injected: {', '.join(report['nxdomain_details'] or [])})[/bold red]"
+        if report["nxdomain_hijacked"]
+        else "[bold green]✔ Clean (Standard NXDOMAIN behavior)[/bold green]"
+    )
+    table.add_row("NXDOMAIN Hijacking:", nx_str)
+
+    tamper_str = (
+        "[bold red]✖ Tampered! (Known queries rewritten)[/bold red]"
+        if report["tampering_detected"]
+        else "[bold green]✔ Clean (Authentic query results)[/bold green]"
+    )
+    table.add_row("Domain Tampering:", tamper_str)
+
+    if report.get("warnings"):
+        table.add_row("", "")
+        table.add_row("[bold yellow]Details & Notes:[/bold yellow]", "")
+        for w in report["warnings"]:
+            table.add_row("•", f"[dim yellow]{w}[/dim yellow]")
+
+    console.print()
+    console.print(
+        Panel(
+            table,
+            title="[bold cyan]🕵️ DNS Leak & Security Audit Report[/bold cyan]",
+            box=ROUNDED,
+            border_style=border_color,
+            padding=(1, 2),
+        )
+    )
     console.print()
 
 

@@ -2,7 +2,7 @@ import argparse
 import sys
 import time
 from typing import List, Optional
-from core import benchmark, network, storage
+from core import benchmark, leak_test, network, storage
 from ui.display import console
 
 
@@ -36,6 +36,12 @@ def create_parser() -> argparse.ArgumentParser:
         "--status",
         action="store_true",
         help="Display current network adapter, configured DNS IPs, and active provider profile",
+    )
+    parser.add_argument(
+        "--leak-test",
+        "-t",
+        action="store_true",
+        help="Run DNS leak, NXDOMAIN hijack, and query tampering security audit",
     )
     parser.add_argument(
         "--flush",
@@ -78,6 +84,7 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
         parsed.auto_best,
         parsed.clear,
         parsed.status,
+        parsed.leak_test,
         parsed.flush,
         parsed.benchmark,
         parsed.list,
@@ -141,14 +148,23 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
         console.print(f"[bold cyan]Profile:  [/bold cyan] [bold magenta]{provider_name}[/bold magenta]")
         sys.exit(0)
 
-    # 4. List Presets
+    # 4. Leak Test
+    if parsed.leak_test:
+        from ui import display
+        cur_dns = dns_configs.get(target_adapter) or network.get_current_dns(target_adapter)
+        console.print(f"[bold cyan]🕵️ Auditing DNS integrity and leak posture on '{target_adapter}'...[/bold cyan]")
+        report = leak_test.run_dns_leak_audit(target_adapter, cur_dns.get("servers", []))
+        display.print_leak_test_report(report)
+        sys.exit(0)
+
+    # 5. List Presets
     if parsed.list:
         from ui import display
         providers = storage.get_all_providers()
         display.print_quick_dns_grid(providers)
         sys.exit(0)
 
-    # 5. Benchmark Only
+    # 6. Benchmark Only
     if parsed.benchmark:
         from ui import display
         providers = storage.get_all_providers()
@@ -157,7 +173,7 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
         display.print_benchmark_table(results)
         sys.exit(0)
 
-    # 6. Auto-Best DNS
+    # 7. Auto-Best DNS
     if parsed.auto_best:
         providers = storage.get_all_providers()
         console.print("[bold cyan]🚀 Benchmarking all DNS servers for best latency...[/bold cyan]")
@@ -175,7 +191,13 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
         cur_dns = dns_configs.get(target_adapter) or network.get_current_dns(target_adapter)
         storage.save_previous_dns(target_adapter, cur_dns)
 
-        ok, msg = network.set_dns(target_adapter, target["dns1"], target.get("dns2"))
+        ok, msg = network.set_dns(
+            target_adapter,
+            target["dns1"],
+            target.get("dns2"),
+            ipv6_1=target.get("ipv6_1"),
+            ipv6_2=target.get("ipv6_2"),
+        )
         if ok:
             console.print(
                 f"[bold green]✔ Auto-Connected to Fastest: [bold white]{target['name']}[/bold white] "
@@ -186,7 +208,7 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
             console.print(f"[bold red]❌ {msg}[/bold red]")
             sys.exit(1)
 
-    # 7. Set Specific DNS
+    # 8. Set Specific DNS
     if parsed.set:
         providers = storage.get_all_providers()
         target = storage.find_provider_by_query(parsed.set, providers)
@@ -198,7 +220,13 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
         cur_dns = dns_configs.get(target_adapter) or network.get_current_dns(target_adapter)
         storage.save_previous_dns(target_adapter, cur_dns)
 
-        ok, msg = network.set_dns(target_adapter, target["dns1"], target.get("dns2"))
+        ok, msg = network.set_dns(
+            target_adapter,
+            target["dns1"],
+            target.get("dns2"),
+            ipv6_1=target.get("ipv6_1"),
+            ipv6_2=target.get("ipv6_2"),
+        )
         if ok:
             sec_str = f", {target['dns2']}" if target.get("dns2") else ""
             console.print(
