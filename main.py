@@ -20,6 +20,9 @@ from ui import display, menu
 
 
 def run_app():
+    # Slightly increase console font size proportionally (height=18pt)
+    display.adjust_console_font(target_height=18)
+
     # Attempt automatic elevation if not running as Administrator on Windows
     is_elevated = network.is_admin()
     if not is_elevated:
