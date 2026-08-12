@@ -124,14 +124,14 @@ def print_status_card(
     table.add_row(f"[bold white]Interface:[/bold white] {adapter_str}", f"[bold white]Privileges:[/bold white] {admin_str}")
 
     servers = current_dns.get("servers", [])
-    is_dhcp = current_dns.get("is_dhcp", False)
+    is_router_default = current_dns.get("is_router_default", False)
 
-    if not servers or is_dhcp:
+    if not servers or (is_router_default and not provider_name):
         dns_display = "[italic yellow]Automatic (DHCP / Router Default)[/italic yellow]"
     else:
         dns_display = "  |  ".join(f"[bold green]{ip}[/bold green]" for ip in servers)
 
-    profile_str = f"✨ [bold magenta]{provider_name}[/bold magenta]" if provider_name else "[dim]Custom / Automatic[/dim]"
+    profile_str = f"✨ [bold magenta]{provider_name}[/bold magenta]" if provider_name else ("[dim]Router Default[/dim]" if is_router_default else "[dim]Custom Profile[/dim]")
     table.add_row(f"[bold white]Configured DNS:[/bold white] {dns_display}", f"[bold white]Profile:[/bold white] {profile_str}")
 
     if previous_dns and previous_dns.get("servers"):
@@ -247,27 +247,30 @@ def print_current_dns_inspector(adapter_name: str, current_dns: Dict[str, any], 
     table.add_row("Network Adapter:", f"{icon} [bold cyan]{adapter_name}[/bold cyan]")
 
     servers = current_dns.get("servers", [])
-    is_dhcp = current_dns.get("is_dhcp", False)
+    is_router_default = current_dns.get("is_router_default", False)
+    is_static = current_dns.get("is_static", False)
 
-    if not servers or is_dhcp:
+    if match_info:
+        dns_str = "  |  ".join(f"[bold green]{ip}[/bold green]" for ip in servers)
+        table.add_row("DNS Configuration:", "[bold green]Active DNS Profile[/bold green]")
+        table.add_row("Server IP(s):", dns_str)
+        table.add_row("Provider Name:", f"✨ [bold magenta]{match_info['name']}[/bold magenta]")
+        table.add_row("Preset Number:", f"[bold yellow]Preset #{match_info['index']}[/bold yellow]")
+        table.add_row("Category:", f"[cyan]{match_info.get('category', 'General')}[/cyan]")
+        if match_info.get("badge"):
+            table.add_row("Badge:", f"[dim cyan]{match_info['badge']}[/dim cyan]")
+        if match_info.get("desc"):
+            table.add_row("Description:", f"[dim white]{match_info['desc']}[/dim white]")
+    elif not servers or is_router_default:
         table.add_row("DNS Configuration:", "[italic yellow]Automatic (DHCP / Router Default)[/italic yellow]")
         table.add_row("Server IP(s):", "[dim]Assigned automatically by local router/gateway[/dim]")
         table.add_row("Matching Preset:", "[dim]None (Default DHCP)[/dim]")
     else:
         dns_str = "  |  ".join(f"[bold green]{ip}[/bold green]" for ip in servers)
-        table.add_row("DNS Configuration:", "[bold green]Static IPv4 DNS[/bold green]")
+        config_type = "Static IPv4 DNS" if is_static else "DHCP Assigned DNS"
+        table.add_row("DNS Configuration:", f"[bold green]{config_type}[/bold green]")
         table.add_row("Server IP(s):", dns_str)
-
-        if match_info:
-            table.add_row("Provider Name:", f"✨ [bold magenta]{match_info['name']}[/bold magenta]")
-            table.add_row("Preset Number:", f"[bold yellow]Preset #{match_info['index']}[/bold yellow]")
-            table.add_row("Category:", f"[cyan]{match_info.get('category', 'General')}[/cyan]")
-            if match_info.get("badge"):
-                table.add_row("Badge:", f"[dim cyan]{match_info['badge']}[/dim cyan]")
-            if match_info.get("desc"):
-                table.add_row("Description:", f"[dim white]{match_info['desc']}[/dim white]")
-        else:
-            table.add_row("Matching Preset:", "[dim yellow]Custom / Unrecognized Provider[/dim yellow]")
+        table.add_row("Matching Preset:", "[dim yellow]Custom / Unrecognized Provider[/dim yellow]")
 
     console.print()
     console.print(

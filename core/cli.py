@@ -146,7 +146,7 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
     if parsed.current:
         cur_dns = dns_configs.get(target_adapter) or network.get_current_dns(target_adapter)
         servers = cur_dns.get("servers", [])
-        is_dhcp = cur_dns.get("is_dhcp", False)
+        is_router_default = cur_dns.get("is_router_default", False)
         match = storage.match_dns_provider_details(servers)
 
         if match:
@@ -157,7 +157,7 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
                 f"[bold magenta]{match['name']}[/bold magenta] {idx_str}  |  "
                 f"[bold green]{ips_str}[/bold green]"
             )
-        elif not servers or is_dhcp:
+        elif not servers or is_router_default:
             console.print(
                 f"[bold cyan]Adapter:[/bold cyan] [bold white]{target_adapter}[/bold white]  |  "
                 f"[italic yellow]Automatic (DHCP / Router Default)[/italic yellow]  |  "
@@ -165,9 +165,10 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
             )
         else:
             ips_str = ", ".join(servers)
+            config_type = "Static Custom DNS" if cur_dns.get("is_static") else "DHCP Assigned DNS"
             console.print(
                 f"[bold cyan]Adapter:[/bold cyan] [bold white]{target_adapter}[/bold white]  |  "
-                f"[dim]Custom / Unrecognized Profile[/dim]  |  "
+                f"[dim]{config_type}[/dim]  |  "
                 f"[bold green]{ips_str}[/bold green]"
             )
         sys.exit(0)
@@ -175,10 +176,12 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
     # 4. Status
     if parsed.status:
         cur_dns = dns_configs.get(target_adapter) or network.get_current_dns(target_adapter)
-        match = storage.match_dns_provider_details(cur_dns.get("servers", []))
-        provider_name = f"{match['name']} [#{match['index']}]" if match else "Custom / Automatic"
+        servers = cur_dns.get("servers", [])
+        is_router_default = cur_dns.get("is_router_default", False)
+        match = storage.match_dns_provider_details(servers)
+        provider_name = f"{match['name']} [#{match['index']}]" if match else ("Router Default" if is_router_default else "Custom Profile")
         dhcp_str = "DHCP (Automatic)" if cur_dns.get("is_dhcp") else "Static"
-        servers_str = ", ".join(cur_dns.get("servers", [])) or "None (Router Default)"
+        servers_str = ", ".join(servers) or "None (Router Default)"
 
         console.print(f"[bold cyan]Adapter:  [/bold cyan] [bold white]{target_adapter}[/bold white]")
         console.print(f"[bold cyan]Status:   [/bold cyan] [bold yellow]{dhcp_str}[/bold yellow]")

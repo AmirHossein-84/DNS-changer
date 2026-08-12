@@ -102,33 +102,66 @@ def get_all_adapters_and_config() -> Tuple[List[Dict[str, str]], Optional[str], 
                     found = IP_PATTERN.findall(l)
                     iface_ips.extend(found)
 
-                # Extract DNS servers
-                dns_servers = []
-                is_dhcp = "DHCP" in iface_body and "Statically Configured DNS Servers" not in iface_body
+                # Extract Default Gateways
+                gateway_lines = [l for l in iface_body.splitlines() if "Default Gateway" in l]
+                gateway_ips = []
+                for l in gateway_lines:
+                    found = IP_PATTERN.findall(l)
+                    for g in found:
+                        if not g.startswith("0.") and not g.startswith("255."):
+                            gateway_ips.append(g)
 
-                in_dns_section = False
+                # Extract DNS servers (Static vs DHCP)
+                static_dns = []
+                dhcp_dns = []
+                current_mode = None
+
                 for line in iface_body.splitlines():
-                    if "DNS servers configured through DHCP:" in line or "Statically Configured DNS Servers:" in line:
-                        in_dns_section = True
+                    if "Statically Configured DNS Servers:" in line:
+                        current_mode = "static"
                         found = IP_PATTERN.findall(line)
                         for ip in found:
-                            if ip not in dns_servers and not ip.startswith("0.") and not ip.startswith("255."):
-                                dns_servers.append(ip)
+                            if ip not in static_dns and not ip.startswith("0.") and not ip.startswith("255."):
+                                static_dns.append(ip)
+                        continue
+                    elif "DNS servers configured through DHCP:" in line:
+                        current_mode = "dhcp"
+                        found = IP_PATTERN.findall(line)
+                        for ip in found:
+                            if ip not in dhcp_dns and not ip.startswith("0.") and not ip.startswith("255."):
+                                dhcp_dns.append(ip)
                         continue
 
-                    if in_dns_section:
+                    if current_mode:
                         if ":" in line and not line.strip().startswith("Register"):
-                            in_dns_section = False
+                            current_mode = None
                         else:
                             found = IP_PATTERN.findall(line)
                             for ip in found:
-                                if ip not in dns_servers and not ip.startswith("0.") and not ip.startswith("255."):
-                                    dns_servers.append(ip)
+                                if not ip.startswith("0.") and not ip.startswith("255."):
+                                    if current_mode == "static" and ip not in static_dns:
+                                        static_dns.append(ip)
+                                    elif current_mode == "dhcp" and ip not in dhcp_dns:
+                                        dhcp_dns.append(ip)
+
+                dns_servers = static_dns if static_dns else dhcp_dns
+                is_static = bool(static_dns)
+                is_dhcp = not is_static
+                is_router_default = (not dns_servers) or (
+                    not is_static and len(dns_servers) == 1 and (
+                        dns_servers[0] in gateway_ips or dns_servers[0].startswith("192.168.") or dns_servers[0].startswith("10.")
+                    )
+                )
 
                 dns_configs[iface_name] = {
                     "servers": dns_servers,
+                    "static_servers": static_dns,
+                    "dhcp_servers": dhcp_dns,
+                    "is_static": is_static,
                     "is_dhcp": is_dhcp,
+                    "is_router_default": is_router_default,
                     "ips": iface_ips,
+                    "gateways": gateway_ips,
                 }
 
                 # Check if this interface owns the active route IP
@@ -204,7 +237,7 @@ def get_current_dns(adapter_name: str) -> Dict[str, any]:
         return dns_configs[adapter_name]
 
     # Fallback to direct query if not in cache
-    dns_info = {"servers": [], "is_dhcp": True}
+    dns_info = {"servers": [], "is_static": False, "is_dhcp": True, "is_router_default": True}
     try:
         res = subprocess.run(
             ["netsh", "interface", "ipv4", "show", "dnsservers", f"name={adapter_name}"],
@@ -213,8 +246,7 @@ def get_current_dns(adapter_name: str) -> Dict[str, any]:
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
         )
         output = res.stdout
-        is_dhcp = "DHCP" in output and "Static" not in output
-        dns_info["is_dhcp"] = is_dhcp
+        is_static = "Statically Configured DNS Servers" in output
         servers = []
         for line in output.splitlines():
             found_ips = IP_PATTERN.findall(line)
@@ -222,6 +254,11 @@ def get_current_dns(adapter_name: str) -> Dict[str, any]:
                 if ip not in servers and not ip.startswith("0.") and not ip.startswith("255."):
                     servers.append(ip)
         dns_info["servers"] = servers
+        dns_info["is_static"] = is_static
+        dns_info["is_dhcp"] = not is_static
+        dns_info["is_router_default"] = (not servers) or (
+            not is_static and len(servers) == 1 and (servers[0].startswith("192.168.") or servers[0].startswith("10."))
+        )
     except Exception:
         pass
     return dns_info
