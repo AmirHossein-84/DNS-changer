@@ -26,7 +26,7 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str, cur
     total = len(providers)
     try:
         raw = console.input(
-            f"\n[bold cyan]👉 Enter DNS number [bold yellow][0-{total}][/bold yellow] or Hotkey [bold yellow](U/P/L/B/M/S/F/Q)[/bold yellow]: [/bold cyan]"
+            f"\n[bold cyan]👉 Enter DNS number [bold yellow][0-{total}][/bold yellow] or Hotkey [bold yellow](U/P/C/L/B/M/S/F/Q)[/bold yellow]: [/bold cyan]"
         ).strip()
     except (KeyboardInterrupt, EOFError):
         return "exit"
@@ -110,6 +110,10 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str, cur
         handle_pin_favorites(providers)
         return "continue"
 
+    elif cmd == "c":
+        handle_current_dns_inspector(active_adapter, current_dns)
+        return "continue"
+
     elif cmd == "l":
         handle_leak_test(active_adapter, current_dns)
         return "continue"
@@ -139,9 +143,16 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str, cur
         return "exit"
 
     else:
-        display.print_warning(f"Unknown command '{raw}'. Enter a DNS number or U/P/L/B/M/S/F/Q.")
+        display.print_warning(f"Unknown command '{raw}'. Enter a DNS number or U/P/C/L/B/M/S/F/Q.")
         time.sleep(1.0)
         return "continue"
+
+
+def handle_current_dns_inspector(adapter_name: str, current_dns: Dict[str, any]):
+    """Displays dedicated current DNS details card and matching preset name."""
+    match = storage.match_dns_provider_details(current_dns.get("servers", []))
+    display.print_current_dns_inspector(adapter_name, current_dns, match)
+    input("Press Enter to return to main menu...")
 
 
 def handle_leak_test(adapter_name: str, current_dns: Dict[str, any]):

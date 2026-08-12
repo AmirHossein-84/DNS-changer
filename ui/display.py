@@ -211,6 +211,8 @@ def print_quick_dns_grid(providers: List[Dict[str, str]], favorites: Optional[Li
     hotkey_text.append("  •  ", style="dim white")
     hotkey_text.append("[P] Fav Pin", style="bold yellow")
     hotkey_text.append("  •  ", style="dim white")
+    hotkey_text.append("[C] Current DNS", style="bold green")
+    hotkey_text.append("  •  ", style="dim white")
     hotkey_text.append("[L] Leak Test", style="bold magenta")
     hotkey_text.append("  •  ", style="dim white")
     hotkey_text.append("[B] Benchmark", style="bold cyan")
@@ -231,6 +233,53 @@ def print_quick_dns_grid(providers: List[Dict[str, str]], favorites: Optional[Li
             padding=(0, 1),
         )
     )
+
+
+def print_current_dns_inspector(adapter_name: str, current_dns: Dict[str, any], match_info: Optional[Dict[str, any]]):
+    """
+    Renders a dedicated details card for current active DNS configuration and preset match.
+    """
+    table = Table.grid(padding=(0, 2))
+    table.add_column(style="bold white", justify="right")
+    table.add_column()
+
+    icon = "📶" if "wi-fi" in adapter_name.lower() or "wireless" in adapter_name.lower() else "🔌"
+    table.add_row("Network Adapter:", f"{icon} [bold cyan]{adapter_name}[/bold cyan]")
+
+    servers = current_dns.get("servers", [])
+    is_dhcp = current_dns.get("is_dhcp", False)
+
+    if not servers or is_dhcp:
+        table.add_row("DNS Configuration:", "[italic yellow]Automatic (DHCP / Router Default)[/italic yellow]")
+        table.add_row("Server IP(s):", "[dim]Assigned automatically by local router/gateway[/dim]")
+        table.add_row("Matching Preset:", "[dim]None (Default DHCP)[/dim]")
+    else:
+        dns_str = "  |  ".join(f"[bold green]{ip}[/bold green]" for ip in servers)
+        table.add_row("DNS Configuration:", "[bold green]Static IPv4 DNS[/bold green]")
+        table.add_row("Server IP(s):", dns_str)
+
+        if match_info:
+            table.add_row("Provider Name:", f"✨ [bold magenta]{match_info['name']}[/bold magenta]")
+            table.add_row("Preset Number:", f"[bold yellow]Preset #{match_info['index']}[/bold yellow]")
+            table.add_row("Category:", f"[cyan]{match_info.get('category', 'General')}[/cyan]")
+            if match_info.get("badge"):
+                table.add_row("Badge:", f"[dim cyan]{match_info['badge']}[/dim cyan]")
+            if match_info.get("desc"):
+                table.add_row("Description:", f"[dim white]{match_info['desc']}[/dim white]")
+        else:
+            table.add_row("Matching Preset:", "[dim yellow]Custom / Unrecognized Provider[/dim yellow]")
+
+    console.print()
+    console.print(
+        Panel(
+            table,
+            title="[bold yellow]🔍 Active DNS Configuration Inspector[/bold yellow]",
+            box=ROUNDED,
+            border_style="cyan",
+            padding=(1, 2),
+        )
+    )
+    console.print()
 
 
 def print_benchmark_table(results: List[Dict[str, any]]):

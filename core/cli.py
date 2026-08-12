@@ -28,9 +28,15 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--clear",
         "--dhcp",
-        "-c",
         action="store_true",
         help="Reset network adapter DNS back to Automatic (DHCP) and flush cache",
+    )
+    parser.add_argument(
+        "--current",
+        "--get-dns",
+        "-c",
+        action="store_true",
+        help="Get current active DNS server IPs and matching preset provider name",
     )
     parser.add_argument(
         "--status",
@@ -83,6 +89,7 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
         parsed.set,
         parsed.auto_best,
         parsed.clear,
+        parsed.current,
         parsed.status,
         parsed.leak_test,
         parsed.flush,
@@ -135,10 +142,41 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
             console.print(f"[bold red]❌ {msg}[/bold red]")
             sys.exit(1)
 
-    # 3. Status
+    # 3. Current DNS and Name Matching
+    if parsed.current:
+        cur_dns = dns_configs.get(target_adapter) or network.get_current_dns(target_adapter)
+        servers = cur_dns.get("servers", [])
+        is_dhcp = cur_dns.get("is_dhcp", False)
+        match = storage.match_dns_provider_details(servers)
+
+        if match:
+            idx_str = f"[bold yellow][#{match['index']} • {match['category']}][/bold yellow]"
+            ips_str = ", ".join(servers)
+            console.print(
+                f"[bold cyan]Adapter:[/bold cyan] [bold white]{target_adapter}[/bold white]  |  "
+                f"[bold magenta]{match['name']}[/bold magenta] {idx_str}  |  "
+                f"[bold green]{ips_str}[/bold green]"
+            )
+        elif not servers or is_dhcp:
+            console.print(
+                f"[bold cyan]Adapter:[/bold cyan] [bold white]{target_adapter}[/bold white]  |  "
+                f"[italic yellow]Automatic (DHCP / Router Default)[/italic yellow]  |  "
+                f"[dim]No static DNS configured[/dim]"
+            )
+        else:
+            ips_str = ", ".join(servers)
+            console.print(
+                f"[bold cyan]Adapter:[/bold cyan] [bold white]{target_adapter}[/bold white]  |  "
+                f"[dim]Custom / Unrecognized Profile[/dim]  |  "
+                f"[bold green]{ips_str}[/bold green]"
+            )
+        sys.exit(0)
+
+    # 4. Status
     if parsed.status:
         cur_dns = dns_configs.get(target_adapter) or network.get_current_dns(target_adapter)
-        provider_name = storage.identify_dns_provider(cur_dns.get("servers", [])) or "Custom / Automatic"
+        match = storage.match_dns_provider_details(cur_dns.get("servers", []))
+        provider_name = f"{match['name']} [#{match['index']}]" if match else "Custom / Automatic"
         dhcp_str = "DHCP (Automatic)" if cur_dns.get("is_dhcp") else "Static"
         servers_str = ", ".join(cur_dns.get("servers", [])) or "None (Router Default)"
 
@@ -148,7 +186,7 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
         console.print(f"[bold cyan]Profile:  [/bold cyan] [bold magenta]{provider_name}[/bold magenta]")
         sys.exit(0)
 
-    # 4. Leak Test
+    # 5. Leak Test
     if parsed.leak_test:
         from ui import display
         cur_dns = dns_configs.get(target_adapter) or network.get_current_dns(target_adapter)
@@ -157,14 +195,14 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
         display.print_leak_test_report(report)
         sys.exit(0)
 
-    # 5. List Presets
+    # 6. List Presets
     if parsed.list:
         from ui import display
         providers = storage.get_all_providers()
         display.print_quick_dns_grid(providers)
         sys.exit(0)
 
-    # 6. Benchmark Only
+    # 7. Benchmark Only
     if parsed.benchmark:
         from ui import display
         providers = storage.get_all_providers()
@@ -173,7 +211,7 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
         display.print_benchmark_table(results)
         sys.exit(0)
 
-    # 7. Auto-Best DNS
+    # 8. Auto-Best DNS
     if parsed.auto_best:
         providers = storage.get_all_providers()
         console.print("[bold cyan]🚀 Benchmarking all DNS servers for best latency...[/bold cyan]")
@@ -208,7 +246,7 @@ def handle_cli(args: Optional[List[str]] = None) -> bool:
             console.print(f"[bold red]❌ {msg}[/bold red]")
             sys.exit(1)
 
-    # 8. Set Specific DNS
+    # 9. Set Specific DNS
     if parsed.set:
         providers = storage.get_all_providers()
         target = storage.find_provider_by_query(parsed.set, providers)

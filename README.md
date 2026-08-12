@@ -92,6 +92,9 @@ DNS-Changer.exe --auto-best
 # Reset active adapter to DHCP (Router Default) and flush cache
 DNS-Changer.exe --clear
 
+# Print current adapter, DNS servers, and matching preset provider name
+DNS-Changer.exe --current
+
 # Print current adapter, DNS servers, and profile name to terminal
 DNS-Changer.exe --status
 
@@ -189,6 +192,7 @@ DNS Changer Pro is engineered for near-zero latency and instant execution:
 | **`0`** | **Reset DHCP** | Reverts adapter DNS back to automatic router defaults. |
 | **`U`** | **Undo / Revert** | Restores the previous DNS configuration in 1 click. |
 | **`P`** | **Pin Favorites** | Toggle golden star pinned status for your preferred servers. |
+| **`C`** | **Current DNS** | Inspects active DNS servers and matches against preset provider names. |
 | **`L`** | **Leak Audit** | Runs comprehensive DNS leak, NXDOMAIN hijack & tampering audit. |
 | **`B`** | **Benchmark** | Runs concurrent UDP latency queries and offers 1-click connect to fastest. |
 | **`M`** | **Custom DNS** | Opens manager to add, edit, or delete your own custom DNS servers. |

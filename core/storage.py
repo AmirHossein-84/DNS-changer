@@ -269,28 +269,46 @@ def get_providers_by_category(category: str) -> List[Dict[str, str]]:
     return DEFAULT_CATEGORIES.get(category, [])
 
 
-def identify_dns_provider(dns_ips: List[str]) -> Optional[str]:
+def match_dns_provider_details(
+    dns_ips: List[str], providers: Optional[List[Dict[str, str]]] = None
+) -> Optional[Dict[str, Any]]:
     """
-    Given a list of active DNS IP addresses, returns the matching provider name if known.
+    Given active DNS IPs, finds the matching provider and returns full details including preset index.
     """
     if not dns_ips:
         return None
 
+    if providers is None:
+        providers = get_all_providers()
+
     primary_ip = dns_ips[0].strip()
     secondary_ip = dns_ips[1].strip() if len(dns_ips) > 1 else None
 
-    # Check exact match first
-    for p in get_all_providers():
+    # 1. Exact match (both primary & secondary)
+    for i, p in enumerate(providers, 1):
         p_d1 = p["dns1"].strip()
         p_d2 = p.get("dns2", "").strip()
+        if secondary_ip and p_d2 and primary_ip == p_d1 and secondary_ip == p_d2:
+            res = dict(p)
+            res["index"] = i
+            return res
 
-        if secondary_ip and p_d2:
-            if primary_ip == p_d1 and secondary_ip == p_d2:
-                return p["name"]
-        if primary_ip == p_d1:
-            return p["name"]
+    # 2. Match primary DNS
+    for i, p in enumerate(providers, 1):
+        if primary_ip == p["dns1"].strip():
+            res = dict(p)
+            res["index"] = i
+            return res
 
     return None
+
+
+def identify_dns_provider(dns_ips: List[str]) -> Optional[str]:
+    """
+    Given a list of active DNS IP addresses, returns the matching provider name if known.
+    """
+    details = match_dns_provider_details(dns_ips)
+    return details["name"] if details else None
 
 
 def find_provider_by_query(query: str, providers: Optional[List[Dict[str, str]]] = None) -> Optional[Dict[str, str]]:
