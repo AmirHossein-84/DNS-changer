@@ -5,6 +5,7 @@ import questionary
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
 from core import benchmark, network, storage
 from ui import display
+from ui.display import console
 
 
 IP_REGEX = re.compile(
@@ -17,95 +18,80 @@ def validate_ip(val: str) -> bool:
     return bool(IP_REGEX.match(val.strip()))
 
 
-def get_main_choice() -> str:
-    """Prompts user for top-level main menu action."""
-    choices = [
-        questionary.Choice("⚡ Select DNS by Category", value="category"),
-        questionary.Choice("🔍 Search & Select from All DNS Servers", value="search"),
-        questionary.Choice("🚀 Benchmark DNS Speed & Auto-Connect", value="benchmark"),
-        questionary.Choice("⚙️ Manage Custom DNS Profiles", value="custom_mgr"),
-        questionary.Choice("🔄 Reset DNS to Automatic (DHCP)", value="clear"),
-        questionary.Choice("🧹 Flush DNS Resolver Cache", value="flush"),
-        questionary.Choice("🔀 Switch Active Network Adapter", value="switch_adapter"),
-        questionary.Choice("🚪 Exit", value="exit"),
-    ]
-    return questionary.select(
-        "Select an action:",
-        choices=choices,
-        use_arrow_keys=True,
-    ).ask()
+def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str) -> str:
+    """
+    Prompts for fast single-step input:
+    - Number (1..N): Sets DNS and returns 'exit_success' to auto-close.
+    - Number 0: Resets DNS to DHCP and returns 'exit_success' to auto-close.
+    - Hotkeys (B, M, S, F, Q): Launches respective tools or exits.
+    """
+    total = len(providers)
+    try:
+        raw = console.input(
+            f"\n[bold cyan]👉 Enter DNS number [bold yellow][0-{total}][/bold yellow] or Hotkey [bold yellow](B/M/S/F/Q)[/bold yellow]: [/bold cyan]"
+        ).strip()
+    except (KeyboardInterrupt, EOFError):
+        return "exit"
 
+    if not raw:
+        return "continue"
 
-def handle_category_menu(adapter_name: str):
-    """Browse and apply DNS from categorized menus."""
-    categories = storage.get_categories()
-    choices = [questionary.Choice(cat, value=cat) for cat in categories]
-    choices.append(questionary.Choice("⬅️ Back to Main Menu", value="back"))
+    # Check for digit selection
+    if raw.isdigit():
+        val = int(raw)
+        if val == 0:
+            ok, msg = network.clear_dns(active_adapter)
+            if ok:
+                display.print_success(f"DNS reset to Automatic (DHCP) for '{active_adapter}' & cache flushed!")
+                return "exit_success"
+            else:
+                display.print_error(msg)
+                time.sleep(2.0)
+                return "continue"
+        elif 1 <= val <= total:
+            target = providers[val - 1]
+            ok, msg = network.set_dns(active_adapter, target["dns1"], target.get("dns2"))
+            if ok:
+                display.print_success(
+                    f"Applied [bold white]{target['name']}[/bold white] ({target['dns1']}"
+                    + (f", {target['dns2']}" if target.get('dns2') else "")
+                    + f") on [bold cyan]{active_adapter}[/bold cyan] & cache flushed!"
+                )
+                return "exit_success"
+            else:
+                display.print_error(msg)
+                time.sleep(2.0)
+                return "continue"
+        else:
+            display.print_warning(f"Number out of range. Please enter 0 to {total}.")
+            time.sleep(1.0)
+            return "continue"
 
-    selected_cat = questionary.select(
-        "Select DNS Category:",
-        choices=choices,
-    ).ask()
-
-    if not selected_cat or selected_cat == "back":
-        return
-
-    providers = storage.get_providers_by_category(selected_cat)
-    if not providers:
-        display.print_warning(f"No servers found in category '{selected_cat}'.")
-        time.sleep(1.5)
-        return
-
-    prov_choices = []
-    for p in providers:
-        label = f"{p['name']} ({p['dns1']}" + (f", {p['dns2']})" if p.get('dns2') else ")")
-        if p.get("desc"):
-            label += f" - {p['desc']}"
-        prov_choices.append(questionary.Choice(label, value=p))
-    prov_choices.append(questionary.Choice("⬅️ Back", value=None))
-
-    selected_provider = questionary.select(
-        f"Select DNS from {selected_cat}:",
-        choices=prov_choices,
-    ).ask()
-
-    if not selected_provider:
-        return
-
-    ok, msg = network.set_dns(
-        adapter_name, selected_provider["dns1"], selected_provider.get("dns2")
-    )
-    if ok:
-        display.print_success(f"Applied {selected_provider['name']} on {adapter_name}!")
+    # Check hotkeys
+    cmd = raw.lower()
+    if cmd == "b":
+        handle_benchmark(active_adapter)
+        return "continue"
+    elif cmd == "m":
+        handle_custom_dns_mgr()
+        return "continue"
+    elif cmd == "s":
+        new_adapter = handle_switch_adapter(active_adapter)
+        return f"switch:{new_adapter}"
+    elif cmd == "f":
+        ok, msg = network.flush_dns_cache()
+        if ok:
+            display.print_success("DNS resolver cache flushed successfully.")
+        else:
+            display.print_error(f"Failed to flush cache: {msg}")
+        time.sleep(1.2)
+        return "continue"
+    elif cmd in ("q", "exit", "quit"):
+        return "exit"
     else:
-        display.print_error(msg)
-    time.sleep(1.5)
-
-
-def handle_search_menu(adapter_name: str):
-    """Search and select any provider from full list."""
-    providers = storage.get_all_providers()
-    choices = []
-    for p in providers:
-        cat_badge = f"[{p.get('category', 'General')}]"
-        label = f"{cat_badge} {p['name']} ({p['dns1']}" + (f", {p['dns2']})" if p.get('dns2') else ")")
-        choices.append(questionary.Choice(label, value=p))
-    choices.append(questionary.Choice("⬅️ Back", value=None))
-
-    selected = questionary.select(
-        "Type to filter or use arrows to choose a DNS provider:",
-        choices=choices,
-    ).ask()
-
-    if not selected:
-        return
-
-    ok, msg = network.set_dns(adapter_name, selected["dns1"], selected.get("dns2"))
-    if ok:
-        display.print_success(f"Applied {selected['name']} on {adapter_name}!")
-    else:
-        display.print_error(msg)
-    time.sleep(1.5)
+        display.print_warning(f"Unknown command '{raw}'. Enter a DNS number or B/M/S/F/Q.")
+        time.sleep(1.0)
+        return "continue"
 
 
 def handle_benchmark(adapter_name: str):
@@ -131,7 +117,6 @@ def handle_benchmark(adapter_name: str):
 
     display.print_benchmark_table(results)
 
-    # Offer to connect to fastest working DNS
     valid_results = [r for r in results if r["status"] == "ok" and r["best_latency"] is not None]
     if not valid_results:
         display.print_warning("No DNS servers responded successfully to query resolution.")
@@ -145,7 +130,7 @@ def handle_benchmark(adapter_name: str):
             value=fastest["provider"],
         ),
         questionary.Choice("🔍 Choose another server from results", value="choose"),
-        questionary.Choice("⬅️ Back to Main Menu", value="back"),
+        questionary.Choice("⬅️ Back to Main Screen", value="back"),
     ]
 
     action = questionary.select("Benchmark Options:", choices=choices).ask()
@@ -170,7 +155,7 @@ def handle_benchmark(adapter_name: str):
 
     ok, msg = network.set_dns(adapter_name, target["dns1"], target.get("dns2"))
     if ok:
-        display.print_success(f"Applied {target['name']} on {adapter_name}!")
+        display.print_success(f"Applied {target['name']} on {adapter_name} & flushed cache!")
     else:
         display.print_error(msg)
     time.sleep(1.5)
@@ -185,7 +170,7 @@ def handle_custom_dns_mgr():
         ]
         if customs:
             choices.append(questionary.Choice(f"🗑️ Remove Custom DNS ({len(customs)} configured)", value="remove"))
-        choices.append(questionary.Choice("⬅️ Back to Main Menu", value="back"))
+        choices.append(questionary.Choice("⬅️ Back to Main Screen", value="back"))
 
         action = questionary.select("Custom DNS Manager:", choices=choices).ask()
         if not action or action == "back":

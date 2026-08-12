@@ -2,7 +2,7 @@ import os
 import sys
 from typing import Dict, List, Optional
 from rich.align import Align
-from rich.box import ROUNDED
+from rich.box import ROUNDED, SIMPLE_HEAVY
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -23,6 +23,44 @@ if sys.platform == "win32":
 
 console = Console(force_terminal=True)
 
+
+def set_console_font(size_y: int = 22, size_x: int = 11, font_name: str = "Lucida Console"):
+    """
+    Increases the Windows Console font size and weight via Win32 API.
+    """
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+
+        class COORD(ctypes.Structure):
+            _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
+
+        class CONSOLE_FONT_INFOEX(ctypes.Structure):
+            _fields_ = [
+                ("cbSize", ctypes.c_ulong),
+                ("nFont", ctypes.c_ulong),
+                ("dwFontSize", COORD),
+                ("FontFamily", ctypes.c_uint),
+                ("FontWeight", ctypes.c_uint),
+                ("FaceName", ctypes.c_wchar * 32),
+            ]
+
+        STD_OUTPUT_HANDLE = -11
+        handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+        font_info = CONSOLE_FONT_INFOEX()
+        font_info.cbSize = ctypes.sizeof(CONSOLE_FONT_INFOEX)
+        font_info.nFont = 0
+        font_info.dwFontSize.X = size_x
+        font_info.dwFontSize.Y = size_y
+        font_info.FontFamily = 54
+        font_info.FontWeight = 700  # Bold
+        font_info.FaceName = font_name
+        ctypes.windll.kernel32.SetCurrentConsoleFontEx(handle, False, ctypes.byref(font_info))
+    except Exception:
+        pass
+
+
 def clear_screen():
     """Clears the console screen cleanly."""
     os.system("cls" if os.name == "nt" else "clear")
@@ -32,8 +70,8 @@ def print_banner():
     """Renders the top branding banner."""
     banner_text = Text()
     banner_text.append("⚡ DNS CHANGER PRO ⚡\n", style="bold cyan")
-    banner_text.append("Fast • Reliable • Anti-Sanction & Privacy DNS Switcher", style="dim white")
-    
+    banner_text.append("Fast 1-Step DNS Switcher • Anti-Sanction & Gaming • Privacy", style="dim white")
+
     panel = Panel(
         Align.center(banner_text),
         box=ROUNDED,
@@ -56,7 +94,6 @@ def print_status_card(
     table.add_column(style="bold white", justify="right")
     table.add_column()
 
-    # Admin Badge
     admin_badge = (
         "[bold green]🛡️ Administrator[/bold green]"
         if is_elevated
@@ -64,11 +101,9 @@ def print_status_card(
     )
     table.add_row("Privileges:", admin_badge)
 
-    # Active Adapter
     icon = "📶" if "wi-fi" in adapter_name.lower() or "wireless" in adapter_name.lower() else "🔌"
     table.add_row("Active Interface:", f"{icon} [bold cyan]{adapter_name}[/bold cyan]")
 
-    # DNS Status
     servers = current_dns.get("servers", [])
     is_dhcp = current_dns.get("is_dhcp", False)
 
@@ -80,7 +115,6 @@ def print_status_card(
 
     table.add_row("Configured DNS:", dns_display)
 
-    # Identified Provider
     if provider_name:
         table.add_row("Active Profile:", f"✨ [bold magenta]{provider_name}[/bold magenta]")
     elif not is_dhcp and servers:
@@ -94,6 +128,73 @@ def print_status_card(
         padding=(0, 1),
     )
     console.print(panel)
+
+
+def print_quick_dns_grid(providers: List[Dict[str, str]]):
+    """
+    Renders all DNS servers in a clean, high-visibility 2-column grid.
+    """
+    table = Table(
+        box=ROUNDED,
+        border_style="bright_blue",
+        header_style="bold yellow",
+        expand=True,
+    )
+
+    table.add_column("#", justify="right", style="bold cyan", no_wrap=True)
+    table.add_column("Provider Name", style="bold white")
+    table.add_column("Primary IP", style="green", no_wrap=True)
+    table.add_column("#", justify="right", style="bold cyan", no_wrap=True)
+    table.add_column("Provider Name", style="bold white")
+    table.add_column("Primary IP", style="green", no_wrap=True)
+
+    half = (len(providers) + 1) // 2
+    for i in range(half):
+        p1 = providers[i]
+        idx1 = i + 1
+
+        idx2_num = i + half
+        if idx2_num < len(providers):
+            p2 = providers[idx2_num]
+            idx2 = idx2_num + 1
+            table.add_row(
+                f"{idx1}.",
+                p1["name"],
+                p1["dns1"],
+                f"{idx2}.",
+                p2["name"],
+                p2["dns1"],
+            )
+        else:
+            table.add_row(
+                f"{idx1}.",
+                p1["name"],
+                p1["dns1"],
+                "",
+                "",
+                "",
+            )
+
+    console.print(table)
+
+    # DHCP reset & Hotkeys bar
+    hotkey_table = Table.grid(expand=True, padding=(0, 1))
+    hotkey_table.add_column(justify="left")
+    hotkey_table.add_column(justify="right")
+
+    hotkey_table.add_row(
+        "[bold green]0. Reset to Automatic (DHCP)[/bold green]",
+        "[bold cyan][B][/bold cyan] Benchmark Speed  •  [bold cyan][M][/bold cyan] Custom DNS  •  [bold cyan][S][/bold cyan] Switch Adapter  •  [bold cyan][F][/bold cyan] Flush  •  [bold red][Q][/bold red] Exit",
+    )
+
+    console.print(
+        Panel(
+            hotkey_table,
+            box=SIMPLE_HEAVY,
+            border_style="yellow",
+            padding=(0, 1),
+        )
+    )
 
 
 def print_benchmark_table(results: List[Dict[str, any]]):

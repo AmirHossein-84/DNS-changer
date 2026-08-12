@@ -20,6 +20,9 @@ from ui import display, menu
 
 
 def run_app():
+    # Enlarge console font on Windows for high readability
+    display.set_console_font(size_y=22, size_x=11)
+
     # Attempt automatic elevation if not running as Administrator on Windows
     is_elevated = network.is_admin()
     if not is_elevated:
@@ -53,42 +56,23 @@ def run_app():
                 is_elevated=network.is_admin(),
             )
 
-            choice = menu.get_main_choice()
+            # Display all DNS servers in high-visibility 2-column numbered grid
+            providers = storage.get_all_providers()
+            display.print_quick_dns_grid(providers)
 
-            if not choice or choice == "exit":
+            # Fast 1-step number input or hotkey
+            action = menu.handle_quick_input(providers, active_adapter)
+
+            if action == "exit_success":
+                time.sleep(1.2)
+                sys.exit(0)
+
+            elif action == "exit":
                 display.print_info("Exiting DNS Changer. Goodbye!")
                 break
 
-            elif choice == "category":
-                menu.handle_category_menu(active_adapter)
-
-            elif choice == "search":
-                menu.handle_search_menu(active_adapter)
-
-            elif choice == "benchmark":
-                menu.handle_benchmark(active_adapter)
-
-            elif choice == "custom_mgr":
-                menu.handle_custom_dns_mgr()
-
-            elif choice == "clear":
-                ok, msg = network.clear_dns(active_adapter)
-                if ok:
-                    display.print_success(msg)
-                else:
-                    display.print_error(msg)
-                time.sleep(1.5)
-
-            elif choice == "flush":
-                ok, msg = network.flush_dns_cache()
-                if ok:
-                    display.print_success("DNS resolver cache flushed successfully.")
-                else:
-                    display.print_error(f"Failed to flush DNS: {msg}")
-                time.sleep(1.5)
-
-            elif choice == "switch_adapter":
-                active_adapter = menu.handle_switch_adapter(active_adapter)
+            elif action.startswith("switch:"):
+                active_adapter = action.split(":", 1)[1]
 
         except KeyboardInterrupt:
             display.print_info("\nOperation interrupted by user. Exiting...")
