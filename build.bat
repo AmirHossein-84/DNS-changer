@@ -12,8 +12,8 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo Compiling with PyInstaller and Custom App Icon...
-pyinstaller --onefile --name "DNS-Changer" --icon="assets\DNS-Changer.ico" --clean main.py
+echo Compiling with PyInstaller (Console TUI, UAC Admin & Custom Icon)...
+pyinstaller --console --uac-admin --onefile --name "DNS-Changer" --icon="assets\DNS-Changer.ico" --clean main.py
 
 if %errorlevel% equ 0 (
     echo.

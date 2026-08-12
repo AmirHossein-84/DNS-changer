@@ -191,7 +191,7 @@ build.bat
 ### Method 2: Manual PyInstaller Command
 ```powershell
 pip install pyinstaller
-pyinstaller --onefile --name "DNS-Changer" --icon="assets/DNS-Changer.ico" --clean main.py
+pyinstaller --console --uac-admin --onefile --name "DNS-Changer" --icon="assets/DNS-Changer.ico" --clean main.py
 ```
 
 The compiled standalone executable with the custom icon will be generated in `dist/DNS-Changer.exe`.

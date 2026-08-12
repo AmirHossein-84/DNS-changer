@@ -18,19 +18,27 @@ def is_admin() -> bool:
 
 def elevate_privileges() -> bool:
     """
-    Relaunches the current script with Administrator privileges on Windows.
-    Returns True if already elevated, or triggers UAC prompt and exits current process.
+    Relaunches the current script or executable with Administrator privileges on Windows.
+    Correctly handles both raw Python scripts and frozen PyInstaller .exe binaries.
     """
     if is_admin():
         return True
 
     if os.name == "nt":
-        # Format arguments with quotes to preserve spaces
-        script = os.path.abspath(sys.argv[0])
-        params = f'"{script}" ' + " ".join([f'"{arg}"' for arg in sys.argv[1:]])
+        is_frozen = getattr(sys, "frozen", False)
+        if is_frozen:
+            # Running as compiled PyInstaller executable
+            executable = sys.executable
+            params = " ".join([f'"{arg}"' for arg in sys.argv[1:]])
+        else:
+            # Running as Python script
+            executable = sys.executable
+            script = os.path.abspath(sys.argv[0])
+            params = f'"{script}" ' + " ".join([f'"{arg}"' for arg in sys.argv[1:]])
+
         try:
             ret = ctypes.windll.shell32.ShellExecuteW(
-                None, "runas", sys.executable, params, None, 1
+                None, "runas", executable, params, None, 1
             )
             # If ShellExecuteW succeeds, ret > 32
             if ret > 32:
