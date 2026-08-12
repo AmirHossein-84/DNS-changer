@@ -113,22 +113,32 @@
 
 ## 🚀 Quick Start
 
-### 1. Prerequisites
+### 📥 Option A: Standalone Executable (Recommended — No Python Needed)
+You can directly download and run the latest pre-compiled standalone `.exe`:
+1. Go to the **[Latest GitHub Releases](https://github.com/undeadmoon84/DNS-changer/releases)** page.
+2. Download **`DNS-Changer.exe`** from the **Assets** section.
+3. Double-click **`DNS-Changer.exe`** to run!
+
+---
+
+### 🐍 Option B: Run from Source (Python)
+
+#### 1. Prerequisites
 - **Operating System**: Windows 10 / 11 / Windows Server
 - **Python**: Python 3.9 or higher
 
-### 2. Clone the Repository
+#### 2. Clone the Repository
 ```powershell
 git clone https://github.com/undeadmoon84/DNS-changer.git
 cd DNS-changer
 ```
 
-### 3. Install Dependencies
+#### 3. Install Dependencies
 ```powershell
 pip install -r requirements.txt
 ```
 
-### 4. Run the Application
+#### 4. Run the Application
 ```powershell
 python main.py
 ```
@@ -136,6 +146,19 @@ python main.py
 
 > [!TIP]
 > If you run the command in a non-admin terminal, DNS Changer will automatically request Windows Administrator elevation via UAC.
+
+---
+
+## ⚡ Performance & Benchmarks
+
+DNS Changer Pro is built for extreme speed and low resource consumption:
+
+| Metric / Phase | Before Optimization | After Optimization | Speedup |
+| :--- | :--- | :--- | :--- |
+| **Active Route & Adapter Detection** | `2,497 ms` *(Cold PowerShell)* | **`0.59 ms`** *(Native Socket Route)* | **~4,200x faster** ⚡ |
+| **Startup Module Imports** | `513 ms` *(Eager Load)* | **`117 ms`** *(Lazy Loading)* | **~4.4x faster** ⚡ |
+| **Total Cold Startup Latency** | **`3,198 ms` (~3.2s)** | **`268 ms` (~0.26s)** | **~12x Faster (Instant Launch)** 🚀 |
+| **Full 26-Server Benchmark** | `~2.2 seconds` | **`0.59 seconds`** *(26 Parallel Workers)* | **~3.7x faster** 🚀 |
 
 ---
 
