@@ -1,9 +1,7 @@
 import re
 import time
 from typing import Dict, List, Optional
-import questionary
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
-from core import benchmark, network, storage
+from core import network, storage
 from ui import display
 from ui.display import console
 
@@ -96,6 +94,10 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str) -> 
 
 def handle_benchmark(adapter_name: str):
     """Runs concurrent DNS speed tests and presents sorted table and auto-connect option."""
+    import questionary
+    from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
+    from core import benchmark
+
     providers = storage.get_all_providers()
     display.print_info(f"Testing real UDP query latency for {len(providers)} DNS servers...")
 
@@ -113,7 +115,7 @@ def handle_benchmark(adapter_name: str):
         def on_progress(done, total, current_name):
             progress.update(task_id, completed=done, description=f"[cyan]Testing {current_name}...")
 
-        results = benchmark.run_benchmark(providers, progress_callback=on_progress)
+        results = benchmark.run_benchmark(providers, progress_callback=on_progress, max_workers=26)
 
     display.print_benchmark_table(results)
 
@@ -163,6 +165,8 @@ def handle_benchmark(adapter_name: str):
 
 def handle_custom_dns_mgr():
     """Add / Remove custom user DNS profiles."""
+    import questionary
+
     while True:
         customs = storage.load_custom_dns()
         choices = [
@@ -215,6 +219,8 @@ def handle_custom_dns_mgr():
 
 def handle_switch_adapter(current_adapter: str) -> str:
     """Lets user select another active or available network adapter."""
+    import questionary
+
     adapters = network.get_network_adapters()
     if not adapters:
         display.print_error("No network adapters detected on this machine.")

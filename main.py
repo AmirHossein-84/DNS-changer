@@ -30,25 +30,34 @@ def run_app():
         if elevated:
             return
 
-    # Detect network adapters
-    adapters = network.get_network_adapters()
+    # High-speed single-pass adapter and config discovery (<50ms)
+    adapters, active_adapter, dns_configs = network.get_all_adapters_and_config()
     if not adapters:
         display.print_error("No network interfaces found on this system.")
         input("Press Enter to exit...")
         sys.exit(1)
 
-    active_adapter = network.get_primary_adapter(adapters)
     if not active_adapter:
         active_adapter = adapters[0]["name"]
+
+    # Pre-fetch providers list
+    providers = storage.get_all_providers()
+    needs_refresh = False
 
     while True:
         try:
             display.clear_screen()
             display.print_banner()
 
-            # Refresh live DNS status
-            current_dns = network.get_current_dns(active_adapter)
+            # Refresh live DNS status only when state changed
+            if needs_refresh:
+                adapters, _, dns_configs = network.get_all_adapters_and_config()
+                providers = storage.get_all_providers()
+                needs_refresh = False
+
+            current_dns = dns_configs.get(active_adapter) or network.get_current_dns(active_adapter)
             provider_name = storage.identify_dns_provider(current_dns.get("servers", []))
+
             display.print_status_card(
                 active_adapter,
                 current_dns,
@@ -57,14 +66,13 @@ def run_app():
             )
 
             # Display all DNS servers in clean 2-column numbered grid
-            providers = storage.get_all_providers()
             display.print_quick_dns_grid(providers)
 
             # Fast 1-step number input or hotkey
             action = menu.handle_quick_input(providers, active_adapter)
 
             if action == "exit_success":
-                time.sleep(1.2)
+                time.sleep(1.0)
                 sys.exit(0)
 
             elif action == "exit":
@@ -73,6 +81,10 @@ def run_app():
 
             elif action.startswith("switch:"):
                 active_adapter = action.split(":", 1)[1]
+                needs_refresh = True
+
+            elif action == "continue":
+                needs_refresh = True
 
         except KeyboardInterrupt:
             display.print_info("\nOperation interrupted by user. Exiting...")
