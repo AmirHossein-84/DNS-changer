@@ -24,43 +24,6 @@ if sys.platform == "win32":
 console = Console(force_terminal=True)
 
 
-def set_console_font(size_y: int = 22, size_x: int = 11, font_name: str = "Lucida Console"):
-    """
-    Increases the Windows Console font size and weight via Win32 API.
-    """
-    if sys.platform != "win32":
-        return
-    try:
-        import ctypes
-
-        class COORD(ctypes.Structure):
-            _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
-
-        class CONSOLE_FONT_INFOEX(ctypes.Structure):
-            _fields_ = [
-                ("cbSize", ctypes.c_ulong),
-                ("nFont", ctypes.c_ulong),
-                ("dwFontSize", COORD),
-                ("FontFamily", ctypes.c_uint),
-                ("FontWeight", ctypes.c_uint),
-                ("FaceName", ctypes.c_wchar * 32),
-            ]
-
-        STD_OUTPUT_HANDLE = -11
-        handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
-        font_info = CONSOLE_FONT_INFOEX()
-        font_info.cbSize = ctypes.sizeof(CONSOLE_FONT_INFOEX)
-        font_info.nFont = 0
-        font_info.dwFontSize.X = size_x
-        font_info.dwFontSize.Y = size_y
-        font_info.FontFamily = 54
-        font_info.FontWeight = 700  # Bold
-        font_info.FaceName = font_name
-        ctypes.windll.kernel32.SetCurrentConsoleFontEx(handle, False, ctypes.byref(font_info))
-    except Exception:
-        pass
-
-
 def clear_screen():
     """Clears the console screen cleanly."""
     os.system("cls" if os.name == "nt" else "clear")

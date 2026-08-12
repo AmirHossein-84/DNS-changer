@@ -20,9 +20,6 @@ from ui import display, menu
 
 
 def run_app():
-    # Enlarge console font on Windows for high readability
-    display.set_console_font(size_y=22, size_x=11)
-
     # Attempt automatic elevation if not running as Administrator on Windows
     is_elevated = network.is_admin()
     if not is_elevated:
@@ -56,7 +53,7 @@ def run_app():
                 is_elevated=network.is_admin(),
             )
 
-            # Display all DNS servers in high-visibility 2-column numbered grid
+            # Display all DNS servers in clean 2-column numbered grid
             providers = storage.get_all_providers()
             display.print_quick_dns_grid(providers)
 
