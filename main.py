@@ -15,22 +15,27 @@ if sys.platform == "win32":
             pass
 
 import time
-from core import network, storage
+from core import cli, network, storage
 from ui import display, menu
 
 
 def run_app():
-    # Slightly increase console font size proportionally (height=18pt)
+    # 1. Process Headless CLI Arguments if provided
+    if len(sys.argv) > 1:
+        if cli.handle_cli():
+            return
+
+    # 2. Adjust console font size proportionally (height=18pt)
     display.adjust_console_font(target_height=18)
 
-    # Attempt automatic elevation if not running as Administrator on Windows
+    # 3. Attempt automatic elevation if not running as Administrator on Windows
     is_elevated = network.is_admin()
     if not is_elevated:
         elevated = network.elevate_privileges()
         if elevated:
             return
 
-    # High-speed single-pass adapter and config discovery (<50ms)
+    # 4. High-speed single-pass adapter and config discovery (<50ms)
     adapters, active_adapter, dns_configs = network.get_all_adapters_and_config()
     if not adapters:
         display.print_error("No network interfaces found on this system.")
@@ -40,8 +45,9 @@ def run_app():
     if not active_adapter:
         active_adapter = adapters[0]["name"]
 
-    # Pre-fetch providers list
+    # Pre-fetch providers list and favorites
     providers = storage.get_all_providers()
+    favorites = storage.get_favorites()
     needs_refresh = False
 
     while True:
@@ -53,23 +59,26 @@ def run_app():
             if needs_refresh:
                 adapters, _, dns_configs = network.get_all_adapters_and_config()
                 providers = storage.get_all_providers()
+                favorites = storage.get_favorites()
                 needs_refresh = False
 
             current_dns = dns_configs.get(active_adapter) or network.get_current_dns(active_adapter)
             provider_name = storage.identify_dns_provider(current_dns.get("servers", []))
+            previous_dns = storage.get_previous_dns(active_adapter)
 
             display.print_status_card(
                 active_adapter,
                 current_dns,
                 provider_name,
                 is_elevated=network.is_admin(),
+                previous_dns=previous_dns,
             )
 
-            # Display all DNS servers in clean 2-column numbered grid
-            display.print_quick_dns_grid(providers)
+            # Display all DNS servers in clean 2-column numbered grid with favorites & badges
+            display.print_quick_dns_grid(providers, favorites=favorites)
 
             # Fast 1-step number input or hotkey
-            action = menu.handle_quick_input(providers, active_adapter)
+            action = menu.handle_quick_input(providers, active_adapter, current_dns)
 
             if action == "exit_success":
                 time.sleep(1.0)

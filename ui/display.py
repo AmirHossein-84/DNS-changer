@@ -53,12 +53,10 @@ def adjust_console_font(target_height: int = 18):
         font_info.cbSize = ctypes.sizeof(CONSOLE_FONT_INFOEX)
 
         if ctypes.windll.kernel32.GetCurrentConsoleFontEx(handle, False, ctypes.byref(font_info)):
-            # Keep current font face, set proportional height (width=0 auto-calculates ratio)
             font_info.dwFontSize.X = 0
             font_info.dwFontSize.Y = target_height
             ctypes.windll.kernel32.SetCurrentConsoleFontEx(handle, False, ctypes.byref(font_info))
         else:
-            # Fallback if GetCurrentConsoleFontEx fails
             font_info.FaceName = "Consolas"
             font_info.dwFontSize.X = 0
             font_info.dwFontSize.Y = target_height
@@ -78,7 +76,7 @@ def print_banner():
     """Renders the top branding banner."""
     banner_text = Text()
     banner_text.append("⚡ DNS CHANGER PRO ⚡\n", style="bold cyan")
-    banner_text.append("Fast 1-Step DNS Switcher • Anti-Sanction & Gaming • Privacy", style="dim white")
+    banner_text.append("Instant 1-Step DNS Switcher • Low Latency & Bypass • Windows Native", style="dim white")
 
     panel = Panel(
         Align.center(banner_text),
@@ -94,9 +92,10 @@ def print_status_card(
     current_dns: Dict[str, any],
     provider_name: Optional[str] = None,
     is_elevated: bool = True,
+    previous_dns: Optional[Dict[str, any]] = None,
 ):
     """
-    Renders an informative live status panel displaying current network and DNS state.
+    Renders an informative live status panel displaying current network, DNS state, and undo availability.
     """
     table = Table.grid(padding=(0, 2))
     table.add_column(style="bold white", justify="right")
@@ -128,6 +127,10 @@ def print_status_card(
     elif not is_dhcp and servers:
         table.add_row("Active Profile:", "[dim]Custom / Unrecognized[/dim]")
 
+    if previous_dns and previous_dns.get("servers"):
+        prev_str = ", ".join(previous_dns["servers"])
+        table.add_row("Previous DNS:", f"[dim cyan]{prev_str}[/dim cyan] [dim yellow](Press [U] to revert)[/dim yellow]")
+
     panel = Panel(
         table,
         title="[bold yellow]📡 Live System Status[/bold yellow]",
@@ -138,10 +141,13 @@ def print_status_card(
     console.print(panel)
 
 
-def print_quick_dns_grid(providers: List[Dict[str, str]]):
+def print_quick_dns_grid(providers: List[Dict[str, str]], favorites: Optional[List[str]] = None):
     """
-    Renders all DNS servers in a clean, high-visibility 2-column grid.
+    Renders all DNS servers in a clean, high-visibility 2-column grid with badges and favorites.
     """
+    if favorites is None:
+        favorites = []
+
     table = Table(
         box=ROUNDED,
         border_style="bright_blue",
@@ -152,32 +158,43 @@ def print_quick_dns_grid(providers: List[Dict[str, str]]):
     table.add_column("#", justify="right", style="bold cyan", no_wrap=True)
     table.add_column("Provider Name", style="bold white")
     table.add_column("Primary IP", style="green", no_wrap=True)
+    table.add_column("Badge", style="dim cyan", no_wrap=True)
     table.add_column("#", justify="right", style="bold cyan", no_wrap=True)
     table.add_column("Provider Name", style="bold white")
     table.add_column("Primary IP", style="green", no_wrap=True)
+    table.add_column("Badge", style="dim cyan", no_wrap=True)
 
     half = (len(providers) + 1) // 2
     for i in range(half):
         p1 = providers[i]
         idx1 = i + 1
+        star1 = "⭐ " if p1["name"] in favorites else ""
+        badge1 = p1.get("badge", "")
 
         idx2_num = i + half
         if idx2_num < len(providers):
             p2 = providers[idx2_num]
             idx2 = idx2_num + 1
+            star2 = "⭐ " if p2["name"] in favorites else ""
+            badge2 = p2.get("badge", "")
+
             table.add_row(
                 f"{idx1}.",
-                p1["name"],
+                f"{star1}{p1['name']}",
                 p1["dns1"],
+                badge1,
                 f"{idx2}.",
-                p2["name"],
+                f"{star2}{p2['name']}",
                 p2["dns1"],
+                badge2,
             )
         else:
             table.add_row(
                 f"{idx1}.",
-                p1["name"],
+                f"{star1}{p1['name']}",
                 p1["dns1"],
+                badge1,
+                "",
                 "",
                 "",
                 "",
@@ -191,8 +208,8 @@ def print_quick_dns_grid(providers: List[Dict[str, str]]):
     hotkey_table.add_column(justify="right")
 
     hotkey_table.add_row(
-        "[bold green]0. Reset to Automatic (DHCP)[/bold green]",
-        "[bold cyan][B][/bold cyan] Benchmark Speed  •  [bold cyan][M][/bold cyan] Custom DNS  •  [bold cyan][S][/bold cyan] Switch Adapter  •  [bold cyan][F][/bold cyan] Flush  •  [bold red][Q][/bold red] Exit",
+        "[bold green]0. Reset to DHCP[/bold green]  •  [bold yellow][U] Undo Revert[/bold yellow]  •  [bold yellow][P] Pin Favorite[/bold yellow]",
+        "[bold cyan][B][/bold cyan] Benchmark  •  [bold cyan][M][/bold cyan] Custom  •  [bold cyan][S][/bold cyan] Adapter  •  [bold cyan][F][/bold cyan] Flush  •  [bold red][Q][/bold red] Exit",
     )
 
     console.print(

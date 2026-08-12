@@ -16,17 +16,17 @@ def validate_ip(val: str) -> bool:
     return bool(IP_REGEX.match(val.strip()))
 
 
-def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str) -> str:
+def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str, current_dns: Dict[str, any]) -> str:
     """
     Prompts for fast single-step input:
     - Number (1..N): Sets DNS and returns 'exit_success' to auto-close.
     - Number 0: Resets DNS to DHCP and returns 'exit_success' to auto-close.
-    - Hotkeys (B, M, S, F, Q): Launches respective tools or exits.
+    - Hotkeys (U, P, B, M, S, F, Q): Launches respective tools or exits.
     """
     total = len(providers)
     try:
         raw = console.input(
-            f"\n[bold cyan]👉 Enter DNS number [bold yellow][0-{total}][/bold yellow] or Hotkey [bold yellow](B/M/S/F/Q)[/bold yellow]: [/bold cyan]"
+            f"\n[bold cyan]👉 Enter DNS number [bold yellow][0-{total}][/bold yellow] or Hotkey [bold yellow](U/P/B/M/S/F/Q)[/bold yellow]: [/bold cyan]"
         ).strip()
     except (KeyboardInterrupt, EOFError):
         return "exit"
@@ -38,6 +38,8 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str) -> 
     if raw.isdigit():
         val = int(raw)
         if val == 0:
+            # Save current for undo
+            storage.save_previous_dns(active_adapter, current_dns)
             ok, msg = network.clear_dns(active_adapter)
             if ok:
                 display.print_success(f"DNS reset to Automatic (DHCP) for '{active_adapter}' & cache flushed!")
@@ -48,6 +50,8 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str) -> 
                 return "continue"
         elif 1 <= val <= total:
             target = providers[val - 1]
+            # Save current for undo
+            storage.save_previous_dns(active_adapter, current_dns)
             ok, msg = network.set_dns(active_adapter, target["dns1"], target.get("dns2"))
             if ok:
                 display.print_success(
@@ -67,15 +71,51 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str) -> 
 
     # Check hotkeys
     cmd = raw.lower()
-    if cmd == "b":
-        handle_benchmark(active_adapter)
+    if cmd == "u":
+        prev = storage.get_previous_dns(active_adapter)
+        if not prev:
+            display.print_warning(f"No previous DNS history saved for '{active_adapter}'.")
+            time.sleep(1.5)
+            return "continue"
+
+        # Save current before reverting
+        storage.save_previous_dns(active_adapter, current_dns)
+
+        if prev.get("is_dhcp") or not prev.get("servers"):
+            ok, msg = network.clear_dns(active_adapter)
+            if ok:
+                display.print_success(f"Reverted '{active_adapter}' to Automatic (DHCP) & flushed cache!")
+            else:
+                display.print_error(msg)
+        else:
+            servers = prev.get("servers", [])
+            dns1 = servers[0]
+            dns2 = servers[1] if len(servers) > 1 else None
+            ok, msg = network.set_dns(active_adapter, dns1, dns2)
+            if ok:
+                display.print_success(f"Reverted '{active_adapter}' to {dns1}" + (f", {dns2}" if dns2 else "") + " & flushed cache!")
+            else:
+                display.print_error(msg)
+
+        time.sleep(1.5)
         return "continue"
+
+    elif cmd == "p":
+        handle_pin_favorites(providers)
+        return "continue"
+
+    elif cmd == "b":
+        handle_benchmark(active_adapter, current_dns)
+        return "continue"
+
     elif cmd == "m":
         handle_custom_dns_mgr()
         return "continue"
+
     elif cmd == "s":
         new_adapter = handle_switch_adapter(active_adapter)
         return f"switch:{new_adapter}"
+
     elif cmd == "f":
         ok, msg = network.flush_dns_cache()
         if ok:
@@ -84,15 +124,44 @@ def handle_quick_input(providers: List[Dict[str, str]], active_adapter: str) -> 
             display.print_error(f"Failed to flush cache: {msg}")
         time.sleep(1.2)
         return "continue"
+
     elif cmd in ("q", "exit", "quit"):
         return "exit"
+
     else:
-        display.print_warning(f"Unknown command '{raw}'. Enter a DNS number or B/M/S/F/Q.")
+        display.print_warning(f"Unknown command '{raw}'. Enter a DNS number or U/P/B/M/S/F/Q.")
         time.sleep(1.0)
         return "continue"
 
 
-def handle_benchmark(adapter_name: str):
+def handle_pin_favorites(providers: List[Dict[str, str]]):
+    """Allows pinning / unpinning providers as favorites."""
+    import questionary
+
+    favorites = storage.get_favorites()
+    choices = []
+    for p in providers:
+        is_fav = p["name"] in favorites
+        star = "⭐ [Pinned]" if is_fav else "⚪"
+        choices.append(questionary.Choice(f"{star} {p['name']} ({p['dns1']})", value=p["name"]))
+    choices.append(questionary.Choice("⬅️ Done", value="done"))
+
+    while True:
+        picked = questionary.select("Toggle Favorite / Pin Status:", choices=choices).ask()
+        if not picked or picked == "done":
+            break
+        storage.toggle_favorite(picked)
+        favorites = storage.get_favorites()
+        # Update choice labels
+        choices = []
+        for p in providers:
+            is_fav = p["name"] in favorites
+            star = "⭐ [Pinned]" if is_fav else "⚪"
+            choices.append(questionary.Choice(f"{star} {p['name']} ({p['dns1']})", value=p["name"]))
+        choices.append(questionary.Choice("⬅️ Done", value="done"))
+
+
+def handle_benchmark(adapter_name: str, current_dns: Optional[Dict[str, any]] = None):
     """Runs concurrent DNS speed tests and presents sorted table and auto-connect option."""
     import questionary
     from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
@@ -154,6 +223,9 @@ def handle_benchmark(adapter_name: str):
         if not picked:
             return
         target = picked
+
+    if current_dns:
+        storage.save_previous_dns(adapter_name, current_dns)
 
     ok, msg = network.set_dns(adapter_name, target["dns1"], target.get("dns2"))
     if ok:
