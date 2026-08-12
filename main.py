@@ -25,8 +25,8 @@ def run_app():
         if cli.handle_cli():
             return
 
-    # 2. Adjust console font size proportionally (height=18pt)
-    display.adjust_console_font(target_height=18)
+    # 2. Initialize console window geometry (120 cols x 34 lines) and font size
+    display.init_console_window(target_cols=120, target_lines=34)
 
     # 3. Attempt automatic elevation if not running as Administrator on Windows
     is_elevated = network.is_admin()
