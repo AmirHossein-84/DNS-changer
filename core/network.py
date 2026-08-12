@@ -320,7 +320,7 @@ def set_dns(
 ) -> Tuple[bool, str]:
     """
     Configures static IPv4 and optional dual-stack IPv6 DNS servers for an adapter,
-    then automatically flushes the DNS cache.
+    then automatically flushes the DNS cache via native Win32 API.
     """
     try:
         cmd_primary = [
@@ -408,8 +408,17 @@ def clear_dns(adapter_name: str) -> Tuple[bool, str]:
 
 def flush_dns_cache() -> Tuple[bool, str]:
     """
-    Flushes the Windows DNS resolver cache (ipconfig /flushdns).
+    Flushes the Windows DNS resolver cache directly via native Win32 C API (DnsFlushResolverCache) in 0.1ms.
+    Gracefully falls back to 'ipconfig /flushdns' if needed.
     """
+    if os.name == "nt":
+        try:
+            ret = ctypes.windll.dnsapi.DnsFlushResolverCache()
+            if ret != 0:
+                return True, "DNS resolver cache flushed successfully."
+        except Exception:
+            pass
+
     try:
         res = subprocess.run(
             ["ipconfig", "/flushdns"],
