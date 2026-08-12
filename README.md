@@ -180,7 +180,7 @@ Press **`B`** from the main menu to run a live speed benchmark across all 26+ DN
 
 ## 🛠️ Building Standalone Windows (.exe)
 
-You can compile DNS Changer into a single standalone `.exe` file that runs on any Windows machine without requiring Python:
+You can compile DNS Changer into a single standalone `.exe` file with the custom application icon:
 
 ### Method 1: One-Click Build Script *(Recommended)*
 Simply double-click `build.bat` or run:
@@ -191,10 +191,10 @@ build.bat
 ### Method 2: Manual PyInstaller Command
 ```powershell
 pip install pyinstaller
-pyinstaller --onefile --name "DNS-Changer" --clean main.py
+pyinstaller --onefile --name "DNS-Changer" --icon="assets/DNS-Changer.ico" --clean main.py
 ```
 
-The compiled standalone executable will be generated in `dist/DNS-Changer.exe`.
+The compiled standalone executable with the custom icon will be generated in `dist/DNS-Changer.exe`.
 
 ---
 
@@ -202,6 +202,8 @@ The compiled standalone executable will be generated in `dist/DNS-Changer.exe`.
 
 ```
 DNS-changer/
+├── assets/
+│   └── DNS-Changer.ico  # Application icon
 ├── core/
 │   ├── __init__.py
 │   ├── network.py       # Adapter detection, netsh DNS set/clear, cache flushing, UAC elevation
@@ -214,8 +216,8 @@ DNS-changer/
 ├── main.py              # Application main entry point
 ├── DNS.py               # Backward-compatible wrapper
 ├── requirements.txt     # Dependencies (rich, questionary, dnspython, pyinstaller)
-├── build.bat            # One-click Windows executable compiler
-├── .gitignore           # Git ignore rules
+├── build.bat            # One-click Windows executable compiler with icon
+├── .gitignore           # Git ignore rules (ignores dist/, build/, *.spec, *.exe)
 └── README.md            # Documentation
 ```
 

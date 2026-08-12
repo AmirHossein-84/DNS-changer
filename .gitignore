@@ -8,10 +8,11 @@ env/
 venv/
 ENV/
 
-# Distribution / PyInstaller
+# Distribution / PyInstaller / Executables
 dist/
 build/
 *.spec
+*.exe
 
 # User Config
 dns_config.json
