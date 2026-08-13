@@ -238,7 +238,11 @@ def handle_benchmark(adapter_name: str, current_dns: Optional[Dict[str, any]] = 
     fastest = valid_results[0]
     choices = [
         questionary.Choice(
-            f"⚡ Connect to Fastest: {fastest['name']} ({fastest['best_latency']} ms)",
+            title=[
+                ("fg:#ffd700 bold", "⚡ Connect to Fastest: "),
+                ("bold", f"{fastest['name']} "),
+                ("fg:#00ff88 bold", f"({fastest['best_latency']} ms)"),
+            ],
             value=fastest["provider"],
         ),
         questionary.Choice("🔍 Choose another server from results", value="choose"),
@@ -255,19 +259,20 @@ def handle_benchmark(adapter_name: str, current_dns: Optional[Dict[str, any]] = 
         choice_list = []
         for rank, r in enumerate(valid_results, 1):
             lat = r["best_latency"]
-            if lat < 45:
-                badge = "⚡"
-            elif lat < 100:
-                badge = "✔ "
-            else:
-                badge = "⚠ "
-
+            badge = "⚡" if lat < 45 else ("✔ " if lat < 100 else "⚠ ")
             lat_str = f"[{lat:>5.1f} ms]"
             name_str = f"{r['name']:<24}"
             cat_str = f"• {r.get('category', 'General'):<22}"
             ip_str = f"{r['dns1']:<15}"
-            label = f"{rank:>2}. {badge} {lat_str}  {name_str}  {cat_str}  {ip_str}"
-            choice_list.append(questionary.Choice(label, value=r["provider"]))
+
+            formatted_title = [
+                ("fg:#5bc0be bold", f"{rank:>2}. {badge} "),
+                ("fg:#00ff88 bold", f"{lat_str}  "),
+                ("bold", f"{name_str}  "),
+                ("fg:#888888", f"{cat_str}  "),
+                ("fg:#00e5ff", f"{ip_str}"),
+            ]
+            choice_list.append(questionary.Choice(title=formatted_title, value=r["provider"]))
 
         choice_list.append(questionary.Choice("⬅️ Cancel / Back", value=None))
         picked = questionary.select("Select DNS Server from Benchmark Results:", choices=choice_list).ask()
