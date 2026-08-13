@@ -252,15 +252,25 @@ def handle_benchmark(adapter_name: str, current_dns: Optional[Dict[str, any]] = 
 
     target = fastest["provider"]
     if action == "choose":
-        choice_list = [
-            questionary.Choice(
-                f"{r['name']} ({r['best_latency']} ms) - {r['dns1']}",
-                value=r["provider"],
-            )
-            for r in valid_results
-        ]
-        choice_list.append(questionary.Choice("⬅️ Cancel", value=None))
-        picked = questionary.select("Select server to apply:", choices=choice_list).ask()
+        choice_list = []
+        for rank, r in enumerate(valid_results, 1):
+            lat = r["best_latency"]
+            if lat < 45:
+                badge = "⚡"
+            elif lat < 100:
+                badge = "✔ "
+            else:
+                badge = "⚠ "
+
+            lat_str = f"[{lat:>5.1f} ms]"
+            name_str = f"{r['name']:<24}"
+            cat_str = f"• {r.get('category', 'General'):<22}"
+            ip_str = f"{r['dns1']:<15}"
+            label = f"{rank:>2}. {badge} {lat_str}  {name_str}  {cat_str}  {ip_str}"
+            choice_list.append(questionary.Choice(label, value=r["provider"]))
+
+        choice_list.append(questionary.Choice("⬅️ Cancel / Back", value=None))
+        picked = questionary.select("Select DNS Server from Benchmark Results:", choices=choice_list).ask()
         if not picked:
             return
         target = picked

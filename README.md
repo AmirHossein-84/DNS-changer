@@ -126,18 +126,11 @@ You can directly download and run the latest pre-compiled standalone `.exe`:
 ### 🛠️ Option B: Building Standalone Windows (.exe)
 You can compile your own standalone `.exe` with the custom embedded icon using `build.bat`:
 
-#### Method 1: Interactive One-Click Build Script *(Recommended)*
+#### Method 1: One-Click Build Script *(Recommended)*
 Simply double-click `build.bat` or run:
 ```cmd
 build.bat
 ```
-
-`build.bat` lets you choose between two optimized build modes:
-
-| Build Mode | Output Size | Startup Latency | Antivirus Compatibility | Description |
-| :--- | :---: | :---: | :---: | :--- |
-| **`[1]` UPX Compression *(Recommended)*** | **~12 MB** | ~268 ms | Standard | Ultra-compact binary. Automatically installs UPX via Windows Package Manager (`winget`) if missing. |
-| **`[2]` Native Fast Compression** | **~30 MB** | **~190 ms** | **100% Clean** | Maximum startup speed, zero false positives, and zero external tools required. |
 
 #### Method 2: Manual PyInstaller Command
 ```powershell
@@ -268,7 +261,7 @@ DNS-changer/
 ├── main.py              # Application entry point with CLI routing and interactive loop
 ├── DNS.py               # Backward-compatible wrapper
 ├── requirements.txt     # Dependencies (rich, questionary, dnspython, pyinstaller)
-├── build.bat            # One-click Windows executable compiler with UPX compression & icon
+├── build.bat            # One-click Windows standalone executable builder with custom icon
 ├── .gitignore           # Git ignore rules (ignores dist/, build/, *.spec, *.exe, dns_config.json)
 └── README.md            # Comprehensive documentation
 ```
