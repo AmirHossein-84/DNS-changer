@@ -14,9 +14,26 @@ echo
 echo "[1/2] Installing Python build dependencies..."
 pip3 install -r requirements.txt
 
+# 2. Ensure macOS .icns icon exists
+if [ ! -f "assets/DNS-Changer.icns" ] && [ -f "assets/DNS-Changer.ico" ]; then
+    echo "[INFO] Converting application icon to Apple ICNS format..."
+    python3 -c "
+from PIL import Image
+img = Image.open('assets/DNS-Changer.ico')
+img.save('assets/DNS-Changer.icns', format='ICNS')
+img.save('assets/DNS-Changer.png', format='PNG')
+" 2>/dev/null || true
+fi
+
+ICON_FLAG=""
+if [ -f "assets/DNS-Changer.icns" ]; then
+    ICON_FLAG="--icon=assets/DNS-Changer.icns"
+fi
+
 echo
 echo "[2/2] Compiling standalone executable with PyInstaller..."
 echo "      * Architecture: $(uname -m) (Native macOS Binary)"
+echo "      * Custom Application Icon: assets/DNS-Changer.icns"
 echo "      * Clean native fast compression"
 echo
 
@@ -25,6 +42,7 @@ pyinstaller \
     --onefile \
     --noupx \
     --name "DNS-Changer" \
+    $ICON_FLAG \
     --clean \
     main.py
 
@@ -49,6 +67,21 @@ EOF
 
 chmod +x dist/DNS-Changer.command 2>/dev/null || true
 chmod +x dist/DNS-Changer 2>/dev/null || true
+
+# 4. Set Finder Icon for DNS-Changer and DNS-Changer.command if Cocoa is available
+if [ -f "assets/DNS-Changer.png" ]; then
+    python3 -c "
+try:
+    import Cocoa
+    ws = Cocoa.NSWorkspace.sharedWorkspace()
+    img = Cocoa.NSImage.alloc().initWithContentsOfFile_('assets/DNS-Changer.png')
+    if img:
+        ws.setIcon_forFile_options_(img, 'dist/DNS-Changer.command', 0)
+        ws.setIcon_forFile_options_(img, 'dist/DNS-Changer', 0)
+except Exception:
+    pass
+" 2>/dev/null || true
+fi
 
 echo
 echo "====================================================================="
