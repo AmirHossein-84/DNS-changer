@@ -28,13 +28,18 @@ def init_console_window(target_cols: int = 120, target_lines: int = 34):
     """
     Initializes terminal window geometry and font size for clean, single-screen rendering.
     """
-    if sys.platform != "win32":
-        return
-    try:
-        os.system(f"mode con: cols={target_cols} lines={target_lines}")
-    except Exception:
-        pass
-    adjust_console_font(target_height=18)
+    if sys.platform == "win32":
+        try:
+            os.system(f"mode con: cols={target_cols} lines={target_lines}")
+        except Exception:
+            pass
+        adjust_console_font(target_height=18)
+    elif sys.platform == "darwin":
+        try:
+            sys.stdout.write(f"\x1b[8;{target_lines};{target_cols}t")
+            sys.stdout.flush()
+        except Exception:
+            pass
 
 
 def adjust_console_font(target_height: int = 18):

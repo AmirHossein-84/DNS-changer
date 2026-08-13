@@ -3,12 +3,12 @@
 <div align="center">
 
 [![Python Version](https://img.shields.io/badge/Python-3.9%2B-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6.svg?style=for-the-badge&logo=windows&logoColor=white)](https://microsoft.com/windows)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-0078D6.svg?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/undeadmoon84/DNS-changer)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 [![Interface](https://img.shields.io/badge/UI-Rich%20TUI-cyan.svg?style=for-the-badge&logo=gnubash&logoColor=white)](https://github.com/Textualize/rich)
-[![Speed](https://img.shields.io/badge/Startup-0.26s%20(Instant)-success.svg?style=for-the-badge)](https://github.com/undeadmoon84/DNS-changer)
+[![Speed](https://img.shields.io/badge/Startup-0.19s%20(Instant)-success.svg?style=for-the-badge)](https://github.com/undeadmoon84/DNS-changer)
 
-**A high-speed, modern, terminal-based DNS switcher, security auditor, speed benchmark suite, and profile manager for Windows.**  
+**A high-speed, modern, cross-platform terminal-based DNS switcher, security auditor, speed benchmark suite, and profile manager for Windows & macOS.**  
 *Switch DNS in 1 step, benchmark UDP resolution in <0.6s, audit DNS leaks & tampering, pin favorites, and automate via CLI flags.*
 
 [Quick Start](#-quick-start) • [Features](#-key-features) • [CLI Automation](#-cli-automation--headless-mode) • [DNS Providers](#-included-dns-providers) • [Benchmark](#-real-udp-dns-benchmark) • [Leak Test](#-dns-leak--security-audit) • [Hotkeys](#-hotkeys--navigation)
@@ -116,57 +116,65 @@ DNS-Changer.exe --set 1 --adapter "Ethernet"
 ## 🚀 Quick Start
 
 ### 📥 Option A: Standalone Executable (Recommended — No Python Needed)
-You can directly download and run the latest pre-compiled standalone `.exe`:
-1. Go to the **[Latest GitHub Releases](https://github.com/undeadmoon84/DNS-changer/releases)** page.
-2. Download **`DNS-Changer.exe`** from the **Assets** section.
-3. Double-click **`DNS-Changer.exe`** to run!
+
+#### 🪟 Windows
+1. Download **`DNS-Changer.exe`** from the **[Latest GitHub Releases](https://github.com/undeadmoon84/DNS-changer/releases)**.
+2. Double-click **`DNS-Changer.exe`** to run!
+
+#### 🍎 macOS (MacBook / iMac / Mac Studio)
+1. Download **`DNS-Changer-macOS.zip`** from GitHub Releases.
+2. Unzip and double-click **`DNS-Changer.command`** (or run `sudo ./DNS-Changer` in Terminal).
 
 ---
 
-### 🛠️ Option B: Building Standalone Windows (.exe)
-You can compile your own standalone `.exe` with the custom embedded icon using `build.bat`:
+### 🛠️ Option B: Building Standalone Executable from Source
 
-#### Method 1: One-Click Build Script *(Recommended)*
+#### 🪟 Windows (`.exe` Build)
 Simply double-click `build.bat` or run:
 ```cmd
 build.bat
 ```
-
-#### Method 2: Manual PyInstaller Command
-```powershell
-pip install pyinstaller
-pyinstaller --console --uac-admin --onefile --name "DNS-Changer" --icon="assets/DNS-Changer.ico" --clean main.py
-```
-
 The compiled standalone executable with the custom icon will be generated in `dist/DNS-Changer.exe`.
+
+#### 🍎 macOS (Mach-O Binary & `.command` Launcher)
+Run the automated build script in Terminal:
+```bash
+chmod +x build.sh
+./build.sh
+```
+This generates both `dist/DNS-Changer` and a double-clickable `dist/DNS-Changer.command` for macOS!
 
 ---
 
 ### 🐍 Option C: Run from Source (Python)
 
 #### 1. Prerequisites
-- **Operating System**: Windows 10 / 11 / Windows Server
+- **Operating System**: Windows 10 / 11 / Windows Server OR macOS 11+ (Big Sur, Monterey, Ventura, Sonoma, Sequoia)
 - **Python**: Python 3.9 or higher
 
 #### 2. Clone the Repository
-```powershell
+```bash
 git clone https://github.com/undeadmoon84/DNS-changer.git
 cd DNS-changer
 ```
 
 #### 3. Install Dependencies
-```powershell
+```bash
 pip install -r requirements.txt
 ```
 
 #### 4. Run the Application
-```powershell
+```bash
+# Windows:
 python main.py
+
+# macOS:
+sudo python3 main.py
 ```
 *(Or use the legacy entry point: `python DNS.py`)*
 
 > [!TIP]
-> If you run the command in a non-admin terminal, DNS Changer will automatically request Windows Administrator elevation via UAC.
+> On Windows, DNS Changer Pro automatically requests UAC Administrator elevation. On macOS, running with `sudo` gives permission to update system network services via `networksetup`.
 
 ---
 
@@ -251,7 +259,7 @@ DNS-changer/
 │   ├── __init__.py
 │   ├── cli.py           # Headless CLI argument parser & automated execution engine
 │   ├── leak_test.py     # DNS leak, NXDOMAIN hijack & query tampering security auditor
-│   ├── network.py       # Win32 C API DNS setter, IPv6 dual-stack, native cache flush
+│   ├── network.py       # Cross-platform network engine (Win32 / netsh & macOS networksetup)
 │   ├── benchmark.py     # 26-worker parallel UDP DNS latency benchmark engine
 │   └── storage.py       # Presets, badges, favorites, history tracking, custom JSON persistence
 ├── ui/
@@ -262,6 +270,7 @@ DNS-changer/
 ├── DNS.py               # Backward-compatible wrapper
 ├── requirements.txt     # Dependencies (rich, questionary, dnspython, pyinstaller)
 ├── build.bat            # One-click Windows standalone executable builder with custom icon
+├── build.sh             # One-click macOS standalone executable & .command builder
 ├── .gitignore           # Git ignore rules (ignores dist/, build/, *.spec, *.exe, dns_config.json)
 └── README.md            # Comprehensive documentation
 ```
