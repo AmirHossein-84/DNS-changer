@@ -1,0 +1,196 @@
+name: 🚀 Build & Release Multi-OS Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # =========================================================================
+  # 🪟 Windows Standalone Executable Build
+  # =========================================================================
+  build-windows:
+    name: 🪟 Build Windows (.exe)
+    runs-on: windows-latest
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: ⚙️ Compile Standalone Executable with PyInstaller
+        run: |
+          pyinstaller --console --uac-admin --onefile --noupx --name "DNS-Changer" --icon="assets/DNS-Changer.ico" --clean main.py
+          Move-Item -Path "dist/DNS-Changer.exe" -Destination "dist/DNS-Changer-Windows.exe"
+
+      - name: 📤 Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binary
+          path: dist/DNS-Changer-Windows.exe
+          if-no-files-found: error
+
+  # =========================================================================
+  # 🍎 macOS Standalone Mach-O Binary & .command Launcher
+  # =========================================================================
+  build-macos:
+    name: 🍎 Build macOS (Universal)
+    runs-on: macos-latest
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
+
+      - name: ⚙️ Compile macOS Standalone Binary & Package Archive
+        run: |
+          # 1. Compile binary
+          ICON_ARG=""
+          if [ -f "assets/DNS-Changer.icns" ]; then
+            ICON_ARG="--icon=assets/DNS-Changer.icns"
+          fi
+
+          pyinstaller --console --onefile --noupx --name "DNS-Changer" $ICON_ARG --clean main.py
+
+          # 2. Create double-clickable Finder launcher
+          cat << 'EOF' > dist/DNS-Changer.command
+          #!/usr/bin/env bash
+          DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+          cd "$DIR"
+          chmod +x ./DNS-Changer 2>/dev/null || true
+          if [ "$EUID" -ne 0 ]; then
+              echo "🔐 DNS Changer Pro requires administrator privileges to modify DNS."
+              sudo ./DNS-Changer "$@"
+          else
+              ./DNS-Changer "$@"
+          fi
+          EOF
+
+          chmod +x dist/DNS-Changer dist/DNS-Changer.command
+
+          # 3. Create zip archive
+          cd dist
+          zip -r DNS-Changer-macOS-Universal.zip DNS-Changer DNS-Changer.command
+          cd ..
+
+      - name: 📤 Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-archive
+          path: dist/DNS-Changer-macOS-Universal.zip
+          if-no-files-found: error
+
+  # =========================================================================
+  # 🐧 Linux Standalone Binary & Tarball
+  # =========================================================================
+  build-linux:
+    name: 🐧 Build Linux (x86_64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
+
+      - name: ⚙️ Compile Standalone Linux Binary & Tarball
+        run: |
+          pyinstaller --console --onefile --noupx --name "DNS-Changer" --clean main.py
+          chmod +x dist/DNS-Changer
+          cp dist/DNS-Changer dist/DNS-Changer-Linux-x86_64
+          cd dist
+          tar -czvf DNS-Changer-Linux.tar.gz DNS-Changer
+          cd ..
+
+      - name: 📤 Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-binaries
+          path: |
+            dist/DNS-Changer-Linux-x86_64
+            dist/DNS-Changer-Linux.tar.gz
+          if-no-files-found: error
+
+  # =========================================================================
+  # 🚀 Publish GitHub Release with all Assets
+  # =========================================================================
+  publish-release:
+    name: 🚀 Publish GitHub Release
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+
+      - name: 📂 Download Windows Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binary
+          path: release_assets/
+
+      - name: 📂 Download macOS Archive
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-archive
+          path: release_assets/
+
+      - name: 📂 Download Linux Binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-binaries
+          path: release_assets/
+
+      - name: 🏷️ Determine Release Tag Name
+        id: vars
+        run: |
+          if [ -n "${{ github.ref_name }}" ] && [[ "${{ github.ref_name }}" == v* ]]; then
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v2.1.0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🎉 Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: ⚡ DNS Changer Pro ${{ steps.vars.outputs.tag }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            release_assets/DNS-Changer-Windows.exe
+            release_assets/DNS-Changer-macOS-Universal.zip
+            release_assets/DNS-Changer-Linux-x86_64
+            release_assets/DNS-Changer-Linux.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

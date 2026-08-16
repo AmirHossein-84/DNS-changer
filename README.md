@@ -3,12 +3,13 @@
 <div align="center">
 
 [![Python Version](https://img.shields.io/badge/Python-3.9%2B-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-0078D6.svg?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/undeadmoon84/DNS-changer)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6.svg?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/undeadmoon84/DNS-changer)
+[![Build & Release](https://img.shields.io/badge/Release-Automated%20CI%2FCD-success.svg?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/undeadmoon84/DNS-changer/releases)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 [![Interface](https://img.shields.io/badge/UI-Rich%20TUI-cyan.svg?style=for-the-badge&logo=gnubash&logoColor=white)](https://github.com/Textualize/rich)
 [![Speed](https://img.shields.io/badge/Startup-0.19s%20(Instant)-success.svg?style=for-the-badge)](https://github.com/undeadmoon84/DNS-changer)
 
-**A high-speed, modern, cross-platform terminal-based DNS switcher, security auditor, speed benchmark suite, and profile manager for Windows & macOS.**  
+**A high-speed, modern, cross-platform terminal-based DNS switcher, security auditor, speed benchmark suite, and profile manager for Windows, macOS & Linux.**  
 *Switch DNS in 1 step, benchmark UDP resolution in <0.6s, audit DNS leaks & tampering, pin favorites, and automate via CLI flags.*
 
 [Quick Start](#-quick-start) • [Features](#-key-features) • [CLI Automation](#-cli-automation--headless-mode) • [DNS Providers](#-included-dns-providers) • [Benchmark](#-real-udp-dns-benchmark) • [Leak Test](#-dns-leak--security-audit) • [Hotkeys](#-hotkeys--navigation)
@@ -118,12 +119,20 @@ DNS-Changer.exe --set 1 --adapter "Ethernet"
 ### 📥 Option A: Standalone Executable (Recommended — No Python Needed)
 
 #### 🪟 Windows
-1. Download **`DNS-Changer.exe`** from the **[Latest GitHub Releases](https://github.com/undeadmoon84/DNS-changer/releases)**.
-2. Double-click **`DNS-Changer.exe`** to run!
+1. Download **`DNS-Changer-Windows.exe`** from the **[Latest GitHub Releases](https://github.com/undeadmoon84/DNS-changer/releases)**.
+2. Double-click **`DNS-Changer-Windows.exe`** to run!
 
 #### 🍎 macOS (MacBook / iMac / Mac Studio)
-1. Download **`DNS-Changer-macOS.zip`** from GitHub Releases.
+1. Download **`DNS-Changer-macOS-Universal.zip`** from GitHub Releases.
 2. Unzip and double-click **`DNS-Changer.command`** (or run `sudo ./DNS-Changer` in Terminal).
+
+#### 🐧 Linux (Ubuntu / Debian / Fedora / Arch)
+1. Download **`DNS-Changer-Linux-x86_64`** (or `DNS-Changer-Linux.tar.gz`).
+2. Make executable & run:
+   ```bash
+   chmod +x DNS-Changer-Linux-x86_64
+   sudo ./DNS-Changer-Linux-x86_64
+   ```
 
 ---
 
