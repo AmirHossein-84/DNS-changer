@@ -7,6 +7,9 @@ __pycache__/
 env/
 venv/
 ENV/
+.venv/
+.build_venv/
+.upx/
 
 # Distribution / PyInstaller / Executables
 dist/

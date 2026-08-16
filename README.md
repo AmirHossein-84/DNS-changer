@@ -137,12 +137,13 @@ build.bat
 The compiled standalone executable with the custom icon will be generated in `dist/DNS-Changer.exe`.
 
 #### 🍎 macOS (Mach-O Binary & `.command` Launcher)
-Run the automated build script in Terminal:
+Run the automated zero-config build script in Terminal:
 ```bash
 chmod +x build.sh
 ./build.sh
 ```
-This generates both `dist/DNS-Changer` and a double-clickable `dist/DNS-Changer.command` for macOS!
+*`build.sh` automatically manages an isolated virtual environment (`.build_venv`) to fully comply with modern macOS Homebrew / PEP 668 standards.*  
+This outputs `dist/DNS-Changer` and a double-clickable `dist/DNS-Changer.command`!
 
 ---
 
@@ -158,17 +159,19 @@ git clone https://github.com/undeadmoon84/DNS-changer.git
 cd DNS-changer
 ```
 
-#### 3. Install Dependencies
-```bash
+#### 3. Setup & Run
+
+##### 🪟 Windows:
+```powershell
 pip install -r requirements.txt
+python main.py
 ```
 
-#### 4. Run the Application
+##### 🍎 macOS (with Virtual Environment):
 ```bash
-# Windows:
-python main.py
-
-# macOS:
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 sudo python3 main.py
 ```
 *(Or use the legacy entry point: `python DNS.py`)*

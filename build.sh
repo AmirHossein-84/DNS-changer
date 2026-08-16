@@ -10,11 +10,27 @@ echo "        🍎 DNS CHANGER PRO - MACOS EXECUTABLE BUILDER 🍎"
 echo "====================================================================="
 echo
 
-# 1. Install build dependencies
-echo "[1/2] Installing Python build dependencies..."
-pip3 install -r requirements.txt
+# 1. Setup isolated Virtual Environment (100% PEP 668 & Homebrew compliant)
+VENV_DIR=".build_venv"
 
-# 2. Ensure macOS .icns icon exists
+if [ -z "$VIRTUAL_ENV" ]; then
+    if [ ! -d "$VENV_DIR" ]; then
+        echo "[1/3] Creating isolated Python build environment (.build_venv)..."
+        python3 -m venv "$VENV_DIR"
+    else
+        echo "[1/3] Using existing cached build environment (.build_venv)..."
+    fi
+    source "$VENV_DIR/bin/activate"
+else
+    echo "[1/3] Using active virtual environment: $VIRTUAL_ENV"
+fi
+
+# 2. Install build dependencies inside the virtual environment
+echo "[2/3] Installing Python build dependencies..."
+pip install --upgrade pip --quiet 2>/dev/null || true
+pip install -r requirements.txt
+
+# 3. Ensure macOS .icns icon exists
 if [ ! -f "assets/DNS-Changer.icns" ] && [ -f "assets/DNS-Changer.ico" ]; then
     echo "[INFO] Converting application icon to Apple ICNS format..."
     python3 -c "
@@ -31,7 +47,7 @@ if [ -f "assets/DNS-Changer.icns" ]; then
 fi
 
 echo
-echo "[2/2] Compiling standalone executable with PyInstaller..."
+echo "[3/3] Compiling standalone executable with PyInstaller..."
 echo "      * Architecture: $(uname -m) (Native macOS Binary)"
 echo "      * Custom Application Icon: assets/DNS-Changer.icns"
 echo "      * Clean native fast compression"
@@ -46,7 +62,7 @@ pyinstaller \
     --clean \
     main.py
 
-# 3. Create double-clickable Finder launcher (DNS-Changer.command)
+# 4. Create double-clickable Finder launcher (DNS-Changer.command)
 cat << 'EOF' > dist/DNS-Changer.command
 #!/usr/bin/env bash
 # Double-click launcher for macOS Finder / Terminal.app
@@ -68,7 +84,7 @@ EOF
 chmod +x dist/DNS-Changer.command 2>/dev/null || true
 chmod +x dist/DNS-Changer 2>/dev/null || true
 
-# 4. Set Finder Icon for DNS-Changer and DNS-Changer.command if Cocoa is available
+# 5. Set Finder Icon for DNS-Changer and DNS-Changer.command if Cocoa is available
 if [ -f "assets/DNS-Changer.png" ]; then
     python3 -c "
 try:
